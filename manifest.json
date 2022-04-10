@@ -1,0 +1,30 @@
+{
+    "manifest_version": 2,
+    "name": "WatchedVideosOnYouTubeRemover",
+    "description": "Remove completely watched videos from watch later playlist on YouTube",
+    "version": "1.0",
+    "icons": {
+        "16": "/images/icon16.png",
+        "48": "/images/icon48.png",
+        "128": "/images/icon128.png"
+    },
+    "page_action": {
+        "default_icon": {
+            "16": "/images/icon16.png",
+            "48": "/images/icon48.png",
+            "128": "/images/icon128.png"
+        }
+    }
+    ,
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.youtube.com/playlist?list=WL"
+            ],
+            "css": [],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}

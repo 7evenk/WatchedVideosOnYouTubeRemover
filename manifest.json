@@ -14,13 +14,13 @@
             "48": "/images/icon48.png",
             "128": "/images/icon128.png"
         }
-    }
-    ,
+    },
     "content_scripts": [
         {
             "matches": [
                 "https://www.youtube.com/playlist?list=WL"
             ],
+            "run_at": "document_end",
             "css": [],
             "js": [
                 "content.js"

@@ -11,15 +11,22 @@ window.onload = () => {
                     let svgClone = delItem.querySelector('svg').cloneNode(true);
                     let text = delItem.querySelector('yt-formatted-string').textContent;
 
-                    const item = document.createElement('ytd-menu-service-item-renderer');
+                    // const item = document.createElement('ytd-menu-service-item-renderer');
+                    const item = document.createElement('div');
                     item.setAttribute('id', 'delComplWatched')
-                    item.setAttribute('use-icons', true);
+                    // item.setAttribute('use-icons', true);
+
+                    item.style.cursor = 'pointer';
+
                     delItem.parentElement.appendChild(item);
 
-                    let delComplWatchedVideosBtn = document.querySelector("ytd-menu-service-item-renderer#delComplWatched");
-                    delComplWatchedVideosBtn.querySelector('yt-icon').appendChild(svgClone);
-                    delComplWatchedVideosBtn.querySelector('yt-formatted-string').innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
-                    delComplWatchedVideosBtn.removeEventListener('tap', () => {}); // ontap gives an exeption but I can't remove it because th event listener comes from the webcomponent ytd-menu-service-item-renderer
+
+                    // let delComplWatchedVideosBtn = document.querySelector("ytd-menu-service-item-renderer#delComplWatched");
+                    let delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
+                    // delComplWatchedVideosBtn.querySelector('yt-icon').appendChild(svgClone);
+                    // delComplWatchedVideosBtn.querySelector('yt-formatted-string').innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
+                    delComplWatchedVideosBtn.innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
+                    // delComplWatchedVideosBtn.removeEventListener('tap', () => {}); // ontap gives an exeption but I can't remove it because th event listener comes from the webcomponent ytd-menu-service-item-renderer
                     delComplWatchedVideosBtn.addEventListener('click', () => {
                         list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer")
                         remove();

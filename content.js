@@ -40,21 +40,10 @@ async function customizeActionsMenu() {
     // Hier eine Promise rein, damit ich diese awaiten kann. Die Promise wird resolved, sobald der mutationObserver detektiert hat, dass das Menu aufgebaut wurde.
     await waitUntilActionsMenuIsReady();
 
-    console.log("menu is here!!!!");
-
-    return;
-
-
-
-    actionsMenu = el.querySelector('tp-yt-iron-dropdown');
-
-
-
-
-    let delComplWatchedAdded = document.querySelector("ytd-menu-service-item-renderer#delComplWatched") != null;
+    let delComplWatchedAdded = document.querySelector('#delComplWatched') != null;
     if (!delComplWatchedAdded) {
         let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
-        let svgClone = delItem.querySelector('svg').cloneNode(true);
+        //let svgClone = delItem.querySelector('svg').cloneNode(true);
         let text = delItem.querySelector('yt-formatted-string').textContent;
 
         // const item = document.createElement('ytd-menu-service-item-renderer');

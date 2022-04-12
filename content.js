@@ -33,32 +33,21 @@ function waitUntilActionsMenuIsReady() {
     });
 }
 
-// This function can't be called immediately with a click. We have to call it from mutiation obeserver as soon as the menu was build. 
-// The menu is only created dynamically by YouTube with the first click on the action menu.
-// When closing the menu the menu items remain. They are just hidden.
 async function customizeActionsMenu() {
-    // Hier eine Promise rein, damit ich diese awaiten kann. Die Promise wird resolved, sobald der mutationObserver detektiert hat, dass das Menu aufgebaut wurde.
     await waitUntilActionsMenuIsReady();
 
     let delComplWatchedAdded = document.querySelector('#delComplWatched') != null;
     if (!delComplWatchedAdded) {
         let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
-        //let svgClone = delItem.querySelector('svg').cloneNode(true);
         let text = delItem.querySelector('yt-formatted-string').textContent;
 
-        // const item = document.createElement('ytd-menu-service-item-renderer');
         const item = document.createElement('div');
         item.setAttribute('id', 'delComplWatched')
-        // item.setAttribute('use-icons', true);
-
         item.style.cursor = 'pointer';
 
         delItem.parentElement.appendChild(item);
 
-        // let delComplWatchedVideosBtn = document.querySelector("ytd-menu-service-item-renderer#delComplWatched");
         let delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
-        // delComplWatchedVideosBtn.querySelector('yt-icon').appendChild(svgClone);
-        // delComplWatchedVideosBtn.querySelector('yt-formatted-string').innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
         delComplWatchedVideosBtn.innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
         // delComplWatchedVideosBtn.removeEventListener('tap', () => {}); // ontap gives an exeption but I can't remove it because th event listener comes from the webcomponent ytd-menu-service-item-renderer
         // delComplWatchedVideosBtn.addEventListener('click', () => {

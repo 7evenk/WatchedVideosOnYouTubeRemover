@@ -1,8 +1,14 @@
 
-var mutationObserver = new MutationObserver(function (mutations) {
+var mutationObserver = new MutationObserver(function (mutations) {  
+    const actionsMenuReady = new CustomEvent('actionsMenuReady');
+
     mutations.forEach(function (mutation) {
         let el = mutation.target;
         if (mutation.target.tagName) {
+            if (el.querySelector('tp-yt-paper-listbox')){
+                document.dispatchEvent(actionsMenuReady);
+            }
+
             el = el.querySelector('#menu.ytd-playlist-sidebar-primary-info-renderer');
             el = el != null ? el.querySelector('ytd-menu-renderer') : null;
             el = el != null ? el.querySelector(':scope > yt-icon-button > button') : null;
@@ -11,11 +17,40 @@ var mutationObserver = new MutationObserver(function (mutations) {
                 el.addEventListener('click', customizeActionsMenu);
             }
         }
-
     });
 });
 
-function customizeActionsMenu() {
+function waitUntilActionsMenuIsReady() {
+    return new Promise((resolve, reject) => {
+        // resolve();
+        const handleEvent = () => {
+            console.log('actionsMenuReady!!!');
+            document.removeEventListener('actionsMenuReady', handleEvent);
+            resolve();
+        }
+
+        document.addEventListener('actionsMenuReady', handleEvent);
+    });
+}
+
+// This function can't be called immediately with a click. We have to call it from mutiation obeserver as soon as the menu was build. 
+// The menu is only created dynamically by YouTube with the first click on the action menu.
+// When closing the menu the menu items remain. They are just hidden.
+async function customizeActionsMenu() {
+    // Hier eine Promise rein, damit ich diese awaiten kann. Die Promise wird resolved, sobald der mutationObserver detektiert hat, dass das Menu aufgebaut wurde.
+    await waitUntilActionsMenuIsReady();
+
+    console.log("menu is here!!!!");
+
+    return;
+
+
+
+    actionsMenu = el.querySelector('tp-yt-iron-dropdown');
+
+
+
+
     let delComplWatchedAdded = document.querySelector("ytd-menu-service-item-renderer#delComplWatched") != null;
     if (!delComplWatchedAdded) {
         let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];

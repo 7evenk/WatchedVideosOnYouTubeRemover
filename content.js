@@ -43,8 +43,10 @@ async function customizeActionsMenu() {
 
         const item = document.createElement('div');
         item.setAttribute('id', 'delComplWatched')
+        item.classList.add('wvoytr-action-menu-item');
         item.style.cursor = 'pointer';
         item.style.fontSize = '14px';
+        item.style.padding = '8px 0';
         const logo = document.createElement('img');
         logo.src = chrome.runtime.getURL("images/icon16.png");
 
@@ -56,6 +58,10 @@ async function customizeActionsMenu() {
 
         const logoDiv = document.createElement('div');
         logoDiv.style.marginLeft = '22px';
+        logoDiv.style.display = 'flex';
+        logoDiv.style.justifyContent = 'center';
+        logoDiv.style.alignItems = 'center';
+
         logoDiv.appendChild(logo);
 
         const textDiv = document.createElement('div');  

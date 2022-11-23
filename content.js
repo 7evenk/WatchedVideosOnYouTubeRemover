@@ -5,14 +5,28 @@ var mutationObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
         let el = mutation.target;
         if (mutation.target.tagName) {
-            if (el.querySelector('tp-yt-paper-listbox')) {
+            if (el.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox')) {
                 document.dispatchEvent(actionsMenuReady);
+                el.style.width = "400px";
             }
 
-            el = el.querySelector('#menu.ytd-playlist-sidebar-primary-info-renderer');
-            el = el != null ? el.querySelector('ytd-menu-renderer') : null;
-            el = el != null ? el.querySelector(':scope > yt-icon-button > button') : null;
-            if (el) {
+            // el = el.querySelector('#menu.ytd-playlist-sidebar-primary-info-renderer');
+            // el = el != null ? el.querySelector('ytd-menu-renderer') : null;
+            // el = el != null ? el.querySelector(':scope > yt-icon-button > button') : null;
+
+            el1 = el.querySelector('ytd-playlist-header-renderer');
+            el2 = el.querySelector('ytd-menu-renderer');
+            el3 = el.querySelector('yt-button-shape#button-shape > button');
+            if (el1) {
+                console.log("el1");
+            }
+            if (el2) {
+                console.log("el2");
+            }
+            if (el3) {
+                console.log("el3");
+            }
+            if (el1 && el2 && el3) {
                 console.log(mutation);
                 el.addEventListener('click', customizeActionsMenu);
             }

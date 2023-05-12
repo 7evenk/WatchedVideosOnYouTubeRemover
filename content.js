@@ -70,7 +70,8 @@ function onWatchLaterUrl() {
             delComplWatchedVideosBtn.appendChild(textDiv);
 
             delComplWatchedVideosBtn.removeEventListener('tap', () => { }); // ontap gives an exeption but I can't remove it because th event listener comes from the webcomponent ytd-menu-service-item-renderer
-            delComplWatchedVideosBtn.addEventListener('click', () => {
+            delComplWatchedVideosBtn.addEventListener('click', async () => {
+                // await scrollPlaylist();
                 list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer")
                 remove();
             })
@@ -115,27 +116,37 @@ function onWatchLaterUrl() {
         return new Promise(resolve => { setTimeout(resolve, ms); });
     }
 
-    async function remove() {
-
+    // async function scrollPlaylist() {
+    //     let oldHeight = 0;
+    //     let list = document.querySelector('ytd-playlist-video-list-renderer #contents');
+    //     let newHeight = list.scrollHeight;
+    //     while (newHeight > oldHeight) {
+    //       await wait(500);
+    //       oldHeight = newHeight;
+    //       list.scrollTo(0, newHeight);
+    //       await wait(5000);
+    //       newHeight = list.scrollHeight;
+    //     }
+    //   }
+      
+      async function remove() {
+        let list = document.querySelectorAll("ytd-playlist-video-renderer");
         for (let el of list) {
-            let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar) {
-                if (pgBar.style.width == "100%") {
-                    // debugger;
-                    el.querySelector("#menu").querySelector("#interaction").click();
-                    setTimeout(() => {
-                        if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                            // debugger;
-                            document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
-                        }
-                    }, 100);
-
-                    await wait(1000);
-                };
+          let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
+          if (pgBar) {
+            if (pgBar.style.width == "100%") {
+              el.querySelector("#menu").querySelector("#interaction").click();
+              await wait(500);
+              if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
+                document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
+              }
+              await wait(1000);
             }
+          }
         }
         document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
-    }
+      }
+      
 
 
 };

@@ -82,6 +82,7 @@ function onWatchLaterUrl() {
                 // await scrollPlaylist();
                 list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer")
                 remove();
+                document.querySelector("ytd-playlist-header-renderer").click(); // pseudo click to get focus back to the playlist and to make it scrollable again
             })
 
         }

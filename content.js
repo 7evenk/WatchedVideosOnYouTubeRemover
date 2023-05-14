@@ -1,17 +1,22 @@
 let mutationObserver;
+let actionsMenuReadyDispatched = false;
 function onWatchLaterUrl() {
     mutationObserver = new MutationObserver(function (mutations) {
         const actionsMenuReady = new CustomEvent('actionsMenuReady');
-
-        mutations.forEach(function (mutation) {
-            let el = mutation.target;
-            if (mutation.target.tagName) {
-                if (el.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox')) {
-                    document.dispatchEvent(actionsMenuReady);
-                    el.style.width = "400px";
+        
+        if (!actionsMenuReadyDispatched) {
+            mutations.forEach(async function (mutation) {
+                let el = mutation.target;
+                if (mutation.target.tagName) {
+                    if (el.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox')) {
+                        await wait(200);
+                        document.dispatchEvent(actionsMenuReady);
+                        actionsMenuReadyDispatched = true;
+                        el.style.width = "400px";
+                    }
                 }
-            }
-        });
+            });
+        }
     });
 
     document.addEventListener('actionsMenuReady', async () => {
@@ -178,6 +183,7 @@ function checkAndUpdate() {
         if (delComplWatchedVideosBtn) {
             delComplWatchedVideosBtn.remove();
         }
+        actionsMenuReadyDispatched = false;
     }
 }
 

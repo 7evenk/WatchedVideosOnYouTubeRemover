@@ -12,7 +12,6 @@ function onWatchLaterUrl() {
                         await wait(200);
                         document.dispatchEvent(actionsMenuReady);
                         actionsMenuReadyDispatched = true;
-                        el.style.width = "400px";
                     }
                 }
             });
@@ -84,7 +83,8 @@ function onWatchLaterUrl() {
                 remove();
                 document.querySelector("ytd-playlist-header-renderer").click(); // pseudo click to get focus back to the playlist and to make it scrollable again
             })
-
+            document.querySelector('#delComplWatched').closest("ytd-menu-popup-renderer").style.maxWidth = '';
+            document.querySelector('#delComplWatched').closest("ytd-menu-popup-renderer").style.maxHeight = '';
         }
     }
 

@@ -37,7 +37,9 @@ function onWatchLaterUrl() {
         let delComplWatchedAdded = document.querySelector('#delComplWatched') != null;
         if (!delComplWatchedAdded) {
             let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
+            let delItem2 = document.querySelectorAll("ytd-menu-navigation-item-renderer")[document.querySelectorAll("ytd-menu-navigation-item-renderer").length - 1];
             let text = delItem.querySelector('yt-formatted-string').textContent;
+            let text2 = delItem2.querySelector('yt-formatted-string').textContent;
 
             const item = document.createElement('div');
             item.setAttribute('id', 'delComplWatched')
@@ -64,7 +66,7 @@ function onWatchLaterUrl() {
 
             const textDiv = document.createElement('div');
             textDiv.style.marginLeft = '18px';
-            textDiv.innerHTML = text == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
+            textDiv.innerHTML = text == 'Videos hinzufügen' || text2 == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
 
             delComplWatchedVideosBtn.appendChild(logoDiv);
             delComplWatchedVideosBtn.appendChild(textDiv);

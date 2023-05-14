@@ -32,6 +32,7 @@ function onWatchLaterUrl() {
     }
 
     async function customizeActionsMenu() {
+        observeMenuPopupRenderer();
         await waitUntilActionsMenuIsReady();
 
         let delComplWatchedAdded = document.querySelector('#delComplWatched') != null;
@@ -78,7 +79,6 @@ function onWatchLaterUrl() {
                 remove();
             })
 
-            observeMenuPopupRenderer();
         }
     }
 

@@ -1,21 +1,25 @@
 let mutationObserver;
 let actionsMenuReadyDispatched = false;
+let waitAfterFirstElMatch = false;
+const actionsMenuReady = new CustomEvent('actionsMenuReady');
 function onWatchLaterUrl() {
     mutationObserver = new MutationObserver(function (mutations) {
-        const actionsMenuReady = new CustomEvent('actionsMenuReady');
-        
-        if (!actionsMenuReadyDispatched) {
-            mutations.forEach(async function (mutation) {
-                let el = mutation.target;
-                if (mutation.target.tagName) {
-                    if (el.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox')) {
-                        await wait(200);
-                        document.dispatchEvent(actionsMenuReady);
-                        actionsMenuReadyDispatched = true;
-                    }
+        mutations.forEach(async function (mutation, index) {
+            if (actionsMenuReadyDispatched && !document.querySelector('#delComplWatched'))
+                actionsMenuReadyDispatched = false;
+            if (!actionsMenuReadyDispatched) {
+                let actionMenu = null;
+                let queriedElement = elementToObserve.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox');
+                if (queriedElement && queriedElement.lastElementChild && queriedElement.lastElementChild.tagName == 'YTD-MENU-NAVIGATION-ITEM-RENDERER') {
+                    actionMenu = queriedElement;
                 }
-            });
-        }
+                if (actionMenu) {
+                    document.dispatchEvent(actionsMenuReady);
+                    actionsMenuReadyDispatched = true;
+                }
+
+            }
+        });
     });
 
     document.addEventListener('actionsMenuReady', async () => {
@@ -24,13 +28,11 @@ function onWatchLaterUrl() {
 
     function waitUntilActionsMenuIsReady() {
         return new Promise((resolve, reject) => {
-            // resolve();
             const handleEvent = () => {
                 console.log('actionsMenuReady!!!');
                 document.removeEventListener('actionsMenuReady', handleEvent);
                 resolve();
             }
-
             document.addEventListener('actionsMenuReady', handleEvent);
         });
     }
@@ -44,7 +46,9 @@ function onWatchLaterUrl() {
             let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
             let delItem2 = document.querySelectorAll("ytd-menu-navigation-item-renderer")[document.querySelectorAll("ytd-menu-navigation-item-renderer").length - 1];
             let text = delItem.querySelector('yt-formatted-string').textContent;
-            let text2 = delItem2.querySelector('yt-formatted-string').textContent;
+            let text2 = '';
+            if (delItem2)
+                text2 = delItem2.querySelector('yt-formatted-string').textContent;
 
             const item = document.createElement('div');
             item.setAttribute('id', 'delComplWatched')
@@ -109,14 +113,12 @@ function onWatchLaterUrl() {
         }
     }
 
+    let elementToObserve = document.querySelector('ytd-popup-container');
 
-    mutationObserver.observe(document.documentElement, {
+    mutationObserver.observe(elementToObserve, {
         attributes: true,
-        characterData: true,
         childList: true,
         subtree: true,
-        attributeOldValue: true,
-        characterDataOldValue: true
     });
 
 
@@ -136,40 +138,40 @@ function onWatchLaterUrl() {
     //       newHeight = list.scrollHeight;
     //     }
     //   }
-      
-      async function remove() {
+
+    async function remove() {
         let list = document.querySelectorAll("ytd-playlist-video-renderer");
         for (let el of list) {
-          let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-          if (pgBar) {
-            if (pgBar.style.width == "100%") {
-              el.querySelector("#menu").querySelector("#interaction").click();
-              await wait(500);
-              if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
-              }
-              await wait(1000);
+            let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
+            if (pgBar) {
+                if (pgBar.style.width == "100%") {
+                    el.querySelector("#menu").querySelector("#interaction").click();
+                    await wait(500);
+                    if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
+                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
+                    }
+                    await wait(1000);
+                }
             }
-          }
         }
         document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
-      }
-      
+    }
+
 
 
 };
 
-function observeTitleChanges(callback) {
-    const titleElement = document.querySelector('head > title');
+// function observeTitleChanges(callback) {
+//     const titleElement = document.querySelector('head > title');
 
-    if (titleElement) {
-        const observer = new MutationObserver(mutations => {
-            callback();
-        });
+//     if (titleElement) {
+//         const observer = new MutationObserver(mutations => {
+//             callback();
+//         });
 
-        observer.observe(titleElement, { childList: true });
-    }
-}
+//         observer.observe(titleElement, { childList: true });
+//     }
+// }
 
 function checkAndUpdate() {
     if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
@@ -185,6 +187,7 @@ function checkAndUpdate() {
             delComplWatchedVideosBtn.remove();
         }
         actionsMenuReadyDispatched = false;
+        waitAfterFirstElMatch = false;
     }
 }
 
@@ -192,4 +195,26 @@ function checkAndUpdate() {
 checkAndUpdate();
 
 // Listen for URL changes and run the script if the URL matches the Watch Later playlist
-observeTitleChanges(checkAndUpdate);
+//observeTitleChanges(checkAndUpdate);
+
+// Select the node that will be observed for mutations
+const targetNode = document.querySelector('title');
+
+// Options for the observer (which mutations to observe)
+const config = { childList: true };
+
+// Callback function to execute when mutations are observed
+const callback = function (mutationsList, observer) {
+    // Use traditional 'for loops' for IE 11
+    for (let mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            checkAndUpdate();
+        }
+    }
+};
+
+// Create an observer instance linked to the callback function
+const observer = new MutationObserver(callback);
+
+// Start observing the target node for configured mutations
+observer.observe(targetNode, config);

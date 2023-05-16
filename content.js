@@ -141,30 +141,36 @@ function onWatchLaterUrl() {
 
     async function remove() {
         let list = document.querySelectorAll("ytd-playlist-video-renderer");
-
+    
+        let totalItemsToRemove = 0;
+        for (let el of list) {
+            let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
+            if (pgBar && pgBar.style.width == "100%") {
+                totalItemsToRemove++;
+            }
+        }
+    
         const progressBarContainer = document.querySelector('#progressBarContainer');
         progressBarContainer.style.display = 'block';
-
-        const totalItems = list.length;
+    
         let itemsProcessed = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar) {
-                if (pgBar.style.width == "100%") {
-                    el.querySelector("#menu").querySelector("#interaction").click();
-                    await wait(500);
-                    if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
-                    }
-                    await wait(1000);
+            if (pgBar && pgBar.style.width == "100%") {
+                el.querySelector("#menu").querySelector("#interaction").click();
+                await wait(500);
+                if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
+                    document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
                 }
+                await wait(1000);
+                itemsProcessed++;
+                updateProgressBar((itemsProcessed / totalItemsToRemove) * 100); 
             }
-            itemsProcessed++;
-            updateProgressBar((itemsProcessed / totalItems) * 100); 
         }
         document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
         hideProgressBar();  
     }
+    
 }
 
 // function observeTitleChanges(callback) {
@@ -232,7 +238,7 @@ function createProgressBar() {
     }
 
     const progressBarContainer = document.createElement('div');
-    progressBarContainer.style.position = 'absolute';
+    progressBarContainer.style.position = 'fixed';
     progressBarContainer.style.top = '0';
     progressBarContainer.style.left = '0';
     progressBarContainer.style.width = '100%';
@@ -250,8 +256,7 @@ function createProgressBar() {
 
     progressBarContainer.appendChild(progressBar);
 
-    const popupMenu = document.querySelector('ytd-popup-container');
-    popupMenu.appendChild(progressBarContainer);
+    document.body.appendChild(progressBarContainer);
 }
 
 function updateProgressBar(percentage) {

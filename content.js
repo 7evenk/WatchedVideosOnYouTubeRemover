@@ -141,6 +141,12 @@ function onWatchLaterUrl() {
 
     async function remove() {
         let list = document.querySelectorAll("ytd-playlist-video-renderer");
+
+        const progressBarContainer = document.querySelector('#progressBarContainer');
+        progressBarContainer.style.display = 'block';
+
+        const totalItems = list.length;
+        let itemsProcessed = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
             if (pgBar) {
@@ -153,13 +159,13 @@ function onWatchLaterUrl() {
                     await wait(1000);
                 }
             }
+            itemsProcessed++;
+            updateProgressBar((itemsProcessed / totalItems) * 100); 
         }
         document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
+        hideProgressBar();  
     }
-
-
-
-};
+}
 
 // function observeTitleChanges(callback) {
 //     const titleElement = document.querySelector('head > title');
@@ -175,6 +181,7 @@ function onWatchLaterUrl() {
 
 function checkAndUpdate() {
     if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
+        createProgressBar();
         onWatchLaterUrl();
     } else {
         if (mutationObserver) {
@@ -218,3 +225,46 @@ const observer = new MutationObserver(callback);
 
 // Start observing the target node for configured mutations
 observer.observe(targetNode, config);
+
+function createProgressBar() {
+    if (document.querySelector('#progressBarContainer')) {
+        return;
+    }
+
+    const progressBarContainer = document.createElement('div');
+    progressBarContainer.style.position = 'absolute';
+    progressBarContainer.style.top = '0';
+    progressBarContainer.style.left = '0';
+    progressBarContainer.style.width = '100%';
+    progressBarContainer.style.height = '5px';
+    progressBarContainer.style.backgroundColor = '#ddd';
+    progressBarContainer.style.zIndex = '9999';
+    progressBarContainer.style.display = 'none'; 
+    progressBarContainer.id = 'progressBarContainer';
+
+    const progressBar = document.createElement('div');
+    progressBar.style.height = '5px';
+    progressBar.style.width = '0%';
+    progressBar.style.backgroundColor = '#4CAF50';
+    progressBar.id = 'progressBar';
+
+    progressBarContainer.appendChild(progressBar);
+
+    const popupMenu = document.querySelector('ytd-popup-container');
+    popupMenu.appendChild(progressBarContainer);
+}
+
+function updateProgressBar(percentage) {
+    const progressBar = document.querySelector('#progressBar');
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+    }
+}
+
+function hideProgressBar() {
+    const progressBarContainer = document.querySelector('#progressBarContainer');
+    if (progressBarContainer) {
+        progressBarContainer.style.display = 'none';
+    }
+}
+

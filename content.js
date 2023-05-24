@@ -10,8 +10,14 @@ function onWatchLaterUrl() {
             if (!actionsMenuReadyDispatched) {
                 let actionMenu = null;
                 let queriedElement = elementToObserve.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox');
-                if (queriedElement && queriedElement.lastElementChild && queriedElement.lastElementChild.tagName == 'YTD-MENU-NAVIGATION-ITEM-RENDERER') {
-                    actionMenu = queriedElement;
+                if (isWatchLaterUrl) {
+                    if (queriedElement && queriedElement.lastElementChild && queriedElement.lastElementChild.tagName == 'YTD-MENU-NAVIGATION-ITEM-RENDERER') {
+                        actionMenu = queriedElement;
+                    }
+                } else {
+                    if (queriedElement && queriedElement.lastElementChild && queriedElement.childElementCount == 5) {
+                        actionMenu = queriedElement;
+                    } 
                 }
                 if (actionMenu) {
                     document.dispatchEvent(actionsMenuReady);
@@ -75,7 +81,8 @@ function onWatchLaterUrl() {
 
             const textDiv = document.createElement('div');
             textDiv.style.marginLeft = '18px';
-            textDiv.innerHTML = text == 'Videos hinzufügen' || text2 == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
+            textDiv.style.marginRight = '18px';
+            textDiv.innerHTML = text == 'Videos hinzufügen' || text == 'Playlist löschen' || text2 == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
 
             delComplWatchedVideosBtn.appendChild(logoDiv);
             delComplWatchedVideosBtn.appendChild(textDiv);
@@ -160,7 +167,11 @@ function onWatchLaterUrl() {
                 el.querySelector("#menu").querySelector("#interaction").click();
                 await wait(500);
                 if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                    document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
+                    if (isWatchLaterUrl) {  
+                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
+                    } else {
+                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[3].click();
+                    }
                 }
                 await wait(1000);
                 itemsProcessed++;
@@ -185,8 +196,16 @@ function onWatchLaterUrl() {
 //     }
 // }
 
+const regex = /^https:\/\/www\.youtube\.com\/playlist\?list=.+$/;
+let isWatchLaterUrl = false;
+
 function checkAndUpdate() {
     if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
+        createProgressBar();
+        onWatchLaterUrl();
+        isWatchLaterUrl = true;
+    }
+    else if (regex.test(window.location.href)) {
         createProgressBar();
         onWatchLaterUrl();
     } else {

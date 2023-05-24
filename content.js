@@ -200,6 +200,7 @@ const regex = /^https:\/\/www\.youtube\.com\/playlist\?list=.+$/;
 let isWatchLaterUrl = false;
 
 function checkAndUpdate() {
+    isWatchLaterUrl = false;    
     if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
         createProgressBar();
         onWatchLaterUrl();

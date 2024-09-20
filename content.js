@@ -152,7 +152,7 @@ function onWatchLaterUrl() {
         let totalItemsToRemove = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && pgBar.style.width.replace(/%/, "") >= "95") {
+            if (pgBar && pgBar.style.width.replace(/%/, "") >= "90") {
                 totalItemsToRemove++;
             }
         }
@@ -163,7 +163,7 @@ function onWatchLaterUrl() {
         let itemsProcessed = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && pgBar.style.width.replace(/%/, "") >= "95") {
+            if (pgBar && pgBar.style.width.replace(/%/, "") >= "90") {
                 el.querySelector("#menu").querySelector("#interaction").click();
                 await wait(500);
                 if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {

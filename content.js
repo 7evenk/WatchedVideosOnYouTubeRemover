@@ -51,7 +51,9 @@ function onWatchLaterUrl() {
         if (!delComplWatchedAdded) {
             let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
             let delItem2 = document.querySelectorAll("ytd-menu-navigation-item-renderer")[document.querySelectorAll("ytd-menu-navigation-item-renderer").length - 1];
-            let text = delItem.querySelector('yt-formatted-string').textContent;
+            let text = '';
+            if (delItem)
+                text = delItem.querySelector('yt-formatted-string').textContent;
             let text2 = '';
             if (delItem2)
                 text2 = delItem2.querySelector('yt-formatted-string').textContent;
@@ -65,7 +67,11 @@ function onWatchLaterUrl() {
             const logo = document.createElement('img');
             logo.src = chrome.runtime.getURL("images/icon16.png");
 
-            delItem.parentElement.appendChild(item);
+            if (delItem) {
+                delItem.parentElement.appendChild(item);
+            } else if (delItem2) {
+                delItem2.parentElement.appendChild(item);
+            }            
 
             let delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
             delComplWatchedVideosBtn.style.display = 'flex';

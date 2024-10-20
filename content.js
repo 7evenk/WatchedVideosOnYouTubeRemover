@@ -2,6 +2,7 @@ let mutationObserver;
 let actionsMenuReadyDispatched = false;
 let waitAfterFirstElMatch = false;
 const actionsMenuReady = new CustomEvent('actionsMenuReady');
+
 function onWatchLaterUrl() {
     mutationObserver = new MutationObserver(function (mutations) {
         mutations.forEach(async function (mutation, index) {
@@ -17,13 +18,12 @@ function onWatchLaterUrl() {
                 } else {
                     if (queriedElement && queriedElement.lastElementChild && queriedElement.childElementCount == 5) {
                         actionMenu = queriedElement;
-                    } 
+                    }
                 }
                 if (actionMenu) {
                     document.dispatchEvent(actionsMenuReady);
                     actionsMenuReadyDispatched = true;
                 }
-
             }
         });
     });
@@ -33,12 +33,12 @@ function onWatchLaterUrl() {
     });
 
     function waitUntilActionsMenuIsReady() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const handleEvent = () => {
                 console.log('actionsMenuReady!!!');
                 document.removeEventListener('actionsMenuReady', handleEvent);
                 resolve();
-            }
+            };
             document.addEventListener('actionsMenuReady', handleEvent);
         });
     }
@@ -59,11 +59,13 @@ function onWatchLaterUrl() {
                 text2 = delItem2.querySelector('yt-formatted-string').textContent;
 
             const item = document.createElement('div');
-            item.setAttribute('id', 'delComplWatched')
+            item.setAttribute('id', 'delComplWatched');
             item.classList.add('wvoytr-action-menu-item');
             item.style.cursor = 'pointer';
             item.style.fontSize = '14px';
-            item.style.padding = '8px 0';
+            item.style.padding = '4px 0';
+            item.style.overflow = 'hidden';
+            item.style.alignItems = 'center';
             const logo = document.createElement('img');
             logo.src = chrome.runtime.getURL("images/icon16.png");
 
@@ -71,37 +73,96 @@ function onWatchLaterUrl() {
                 delItem.parentElement.appendChild(item);
             } else if (delItem2) {
                 delItem2.parentElement.appendChild(item);
-            }            
+            }
 
             let delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
             delComplWatchedVideosBtn.style.display = 'flex';
-            delComplWatchedVideosBtn.style.marginTop = '4px';
+            delComplWatchedVideosBtn.style.marginTop = '2px';
 
             const logoDiv = document.createElement('div');
-            logoDiv.style.marginLeft = '22px';
+            logoDiv.style.marginLeft = '8px';
             logoDiv.style.display = 'flex';
-            logoDiv.style.justifyContent = 'center';
-            logoDiv.style.alignItems = 'center';
-
+            //logoDiv.style.justifyContent = 'center';
+            //logoDiv.style.alignItems = 'center';
             logoDiv.appendChild(logo);
 
             const textDiv = document.createElement('div');
-            textDiv.style.marginLeft = '18px';
-            textDiv.style.marginRight = '18px';
-            textDiv.innerHTML = text == 'Videos hinzufügen' || text == 'Playlist löschen' || text2 == 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
+            textDiv.style.marginLeft = '8px';
+            textDiv.style.marginRight = '8px';
+            textDiv.style.whiteSpace = 'nowrap';
+            textDiv.innerHTML = text === 'Videos hinzufügen' || text === 'Playlist löschen' || text2 === 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
 
             delComplWatchedVideosBtn.appendChild(logoDiv);
             delComplWatchedVideosBtn.appendChild(textDiv);
 
-            delComplWatchedVideosBtn.removeEventListener('tap', () => { }); // ontap gives an exeption but I can't remove it because th event listener comes from the webcomponent ytd-menu-service-item-renderer
-            delComplWatchedVideosBtn.addEventListener('click', async () => {
-                // await scrollPlaylist();
-                list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer")
-                remove();
-                document.querySelector("ytd-playlist-header-renderer").click(); // pseudo click to get focus back to the playlist and to make it scrollable again
-            })
-            document.querySelector('#delComplWatched').closest("ytd-menu-popup-renderer").style.maxWidth = '';
-            document.querySelector('#delComplWatched').closest("ytd-menu-popup-renderer").style.maxHeight = '';
+            // Input field for percentage threshold
+            const percentageInputDiv = document.createElement('div');
+            percentageInputDiv.style.display = 'flex';
+            percentageInputDiv.style.alignItems = 'center';
+            percentageInputDiv.style.marginLeft = '8px';
+            percentageInputDiv.style.marginRight = '8px';
+            percentageInputDiv.style.marginTop = '0';
+
+            // Label for the input
+            const percentageLabel = document.createElement('span');
+            percentageLabel.innerHTML = 'Threshold: ';
+            percentageLabel.style.marginRight = '8px'; 
+
+            // Input field for percentage
+            const percentageInput = document.createElement('input');
+            percentageInput.type = 'number';
+            percentageInput.min = '0';
+            percentageInput.max = '100';
+            percentageInput.value = '100';
+            percentageInput.style.width = '50px';
+            percentageInput.style.padding = '4px';
+            percentageInput.style.margin = '0'; 
+            percentageInput.style.boxSizing = 'border-box';
+            percentageInput.style.height = 'auto';
+            
+            // Unit for percentage
+            const percentageUnit = document.createElement('span');
+            percentageUnit.innerHTML = '%';
+            percentageUnit.style.marginLeft = '8px';
+            percentageUnit.style.marginRight = '4px';
+
+            // Append elements
+            percentageInputDiv.appendChild(percentageLabel);
+            percentageInputDiv.appendChild(percentageInput);
+            percentageInputDiv.appendChild(percentageUnit);
+
+            // Append the percentage div to the main container
+            delComplWatchedVideosBtn.appendChild(percentageInputDiv);
+
+            // Event listener for removing videos
+            delComplWatchedVideosBtn.addEventListener('click', async (event) => {
+                if (event.target === percentageInput || event.target === percentageLabel) {
+                    event.stopPropagation();
+                    return;
+                }
+
+                const userPercentage = parseInt(percentageInput.value, 10) || 100;
+                console.log(`Removing videos watched at least ${userPercentage}%`);
+
+                list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer");
+
+                remove(userPercentage);
+
+                document.querySelector("ytd-playlist-header-renderer").click();
+            });
+
+            // Use MutationObserver to remove max-width after the element is rendered
+            const popupRenderer = document.querySelector("ytd-menu-popup-renderer");
+            const popupObserver = new MutationObserver(function (mutations) {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === "style" && popupRenderer.style.maxWidth) {
+                        popupRenderer.style.maxWidth = 'none'; // Remove the max-width
+                    }
+                });
+            });
+
+            // Observe changes to the styles of the popup renderer
+            popupObserver.observe(popupRenderer, { attributes: true });
         }
     }
 
@@ -121,59 +182,44 @@ function onWatchLaterUrl() {
         if (menuPopupRenderer) {
             menuPopupRendererObserver.observe(menuPopupRenderer, {
                 attributes: true,
-                attributeFilter: ['style']
+                attributeFilter: ['style'],
             });
         }
     }
 
     let elementToObserve = document.querySelector('ytd-popup-container');
-
     mutationObserver.observe(elementToObserve, {
         attributes: true,
         childList: true,
         subtree: true,
     });
 
-
     function wait(ms) {
-        return new Promise(resolve => { setTimeout(resolve, ms); });
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    // async function scrollPlaylist() {
-    //     let oldHeight = 0;
-    //     let list = document.querySelector('ytd-playlist-video-list-renderer #contents');
-    //     let newHeight = list.scrollHeight;
-    //     while (newHeight > oldHeight) {
-    //       await wait(500);
-    //       oldHeight = newHeight;
-    //       list.scrollTo(0, newHeight);
-    //       await wait(5000);
-    //       newHeight = list.scrollHeight;
-    //     }
-    //   }
-
-    async function remove() {
+    async function remove(userPercentage) {
         let list = document.querySelectorAll("ytd-playlist-video-renderer");
-    
+
         let totalItemsToRemove = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && pgBar.style.width == "100%") {
+            if (pgBar && parseFloat(pgBar.style.width) >= userPercentage) {
                 totalItemsToRemove++;
             }
         }
-    
+
         const progressBarContainer = document.querySelector('#progressBarContainer');
         progressBarContainer.style.display = 'block';
-    
+
         let itemsProcessed = 0;
         for (let el of list) {
             let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && pgBar.style.width == "100%") {
+            if (pgBar && parseFloat(pgBar.style.width) >= userPercentage) {
                 el.querySelector("#menu").querySelector("#interaction").click();
                 await wait(500);
                 if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                    if (isWatchLaterUrl) {  
+                    if (isWatchLaterUrl) {
                         document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
                     } else {
                         document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[3].click();
@@ -181,38 +227,24 @@ function onWatchLaterUrl() {
                 }
                 await wait(1000);
                 itemsProcessed++;
-                updateProgressBar((itemsProcessed / totalItemsToRemove) * 100); 
+                updateProgressBar((itemsProcessed / totalItemsToRemove) * 100);
             }
         }
         document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
-        hideProgressBar();  
+        hideProgressBar();
     }
-    
 }
-
-// function observeTitleChanges(callback) {
-//     const titleElement = document.querySelector('head > title');
-
-//     if (titleElement) {
-//         const observer = new MutationObserver(mutations => {
-//             callback();
-//         });
-
-//         observer.observe(titleElement, { childList: true });
-//     }
-// }
 
 const regex = /^https:\/\/www\.youtube\.com\/playlist\?list=.+$/;
 let isWatchLaterUrl = false;
 
 function checkAndUpdate() {
-    isWatchLaterUrl = false;    
+    isWatchLaterUrl = false;
     if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
         createProgressBar();
         onWatchLaterUrl();
         isWatchLaterUrl = true;
-    }
-    else if (regex.test(window.location.href)) {
+    } else if (regex.test(window.location.href)) {
         createProgressBar();
         onWatchLaterUrl();
     } else {
@@ -220,7 +252,6 @@ function checkAndUpdate() {
             mutationObserver.disconnect();
         }
 
-        // Remove menu item from other pages
         const delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
         if (delComplWatchedVideosBtn) {
             delComplWatchedVideosBtn.remove();
@@ -230,21 +261,12 @@ function checkAndUpdate() {
     }
 }
 
-// Run the script if the current URL matches the Watch Later playlist
 checkAndUpdate();
 
-// Listen for URL changes and run the script if the URL matches the Watch Later playlist
-//observeTitleChanges(checkAndUpdate);
-
-// Select the node that will be observed for mutations
 const targetNode = document.querySelector('title');
-
-// Options for the observer (which mutations to observe)
 const config = { childList: true };
 
-// Callback function to execute when mutations are observed
 const callback = function (mutationsList, observer) {
-    // Use traditional 'for loops' for IE 11
     for (let mutation of mutationsList) {
         if (mutation.type === 'childList') {
             checkAndUpdate();
@@ -252,10 +274,7 @@ const callback = function (mutationsList, observer) {
     }
 };
 
-// Create an observer instance linked to the callback function
 const observer = new MutationObserver(callback);
-
-// Start observing the target node for configured mutations
 observer.observe(targetNode, config);
 
 function createProgressBar() {
@@ -271,7 +290,7 @@ function createProgressBar() {
     progressBarContainer.style.height = '5px';
     progressBarContainer.style.backgroundColor = '#ddd';
     progressBarContainer.style.zIndex = '9999';
-    progressBarContainer.style.display = 'none'; 
+    progressBarContainer.style.display = 'none';
     progressBarContainer.id = 'progressBarContainer';
 
     const progressBar = document.createElement('div');
@@ -281,7 +300,6 @@ function createProgressBar() {
     progressBar.id = 'progressBar';
 
     progressBarContainer.appendChild(progressBar);
-
     document.body.appendChild(progressBarContainer);
 }
 
@@ -298,4 +316,3 @@ function hideProgressBar() {
         progressBarContainer.style.display = 'none';
     }
 }
-

@@ -8,38 +8,38 @@ Watched Videos On YouTube Remover
 
 ## Short description
 
-Remove watched videos from YouTube playlists while keeping partially watched videos for later.
+Remove watched videos from YouTube playlists while keeping unfinished videos.
 
 ## Detailed description
 
 Clean up your YouTube playlists without losing videos you have not finished.
 
-YouTube's built-in cleanup options are limited. Watched Videos On YouTube Remover adds a dedicated action to Watch Later and playlists you can edit. Choose how much of a video counts as watched, confirm the cleanup, and follow the progress while the extension works.
+YouTube's built-in cleanup options are limited. Watched Videos On YouTube Remover adds a dedicated cleanup action to Watch Later and playlists you can edit. Choose how much of a video counts as watched, confirm the cleanup, and follow its progress directly on YouTube.
 
 KEY FEATURES
 
 • Remove videos at or above your chosen watch threshold
 • Keep partially watched videos in the playlist
-• Works with Watch Later and playlists you can edit
-• Automatically scrolls through playlist entries as YouTube loads them
-• Clear loading and removal progress
+• Works with Watch Later and editable custom playlists
+• Automatically loads playlist entries as YouTube makes them available
+• Shows separate loading and removal progress
 • Cancel safely before the next video is removed
-• Confirmation before cleanup starts
+• Confirmation before cleanup begins
 • English and German interface
 
 BUILT FOR CONTROL
 
-The safe default threshold is 100%. You can choose any value from 0% to 100%, for example a lower value when you want skipped outros to count as watched.
+The safe default threshold is 100%. You can deliberately choose any value from 0% to 100%—for example, a lower value when you want videos with skipped outros to count as watched.
 
-Large playlists are loaded in batches by YouTube and can take some time. The extension shows how many entries have loaded and keeps the cleanup status visible throughout the process.
+YouTube loads large playlists in batches, so processing them can take some time. The extension keeps the current loading or cleanup status visible throughout the operation.
 
 PRIVATE BY DESIGN
 
-• No account required
+• No separate account required
 • No analytics or tracking
-• No browsing or viewing history collected
+• No browsing or viewing history stored
 • No data sold or shared
-• Open-source implementation
+• Open source under GPL-3.0
 
 HOW TO USE
 
@@ -51,11 +51,21 @@ HOW TO USE
 
 The extension only removes videos from the selected playlist. It does not delete videos from YouTube.
 
+WHAT’S NEW IN VERSION 1.1.0
+
+• More reliable integration with current YouTube playlist menus
+• Automatic playlist loading with visible progress
+• Redesigned threshold control with a safe 100% default
+• Confirmation and cancellation controls
+• Clear completion and error messages
+• Improved handling of large playlists
+• English and German interface
+
 Source code and issue tracker:
 https://github.com/7evenk/WatchedVideosOnYouTubeRemover
 
 Project website:
-https://7evenk.github.io/
+https://7evenk.github.io/watched-videos.html
 
 Watched Videos On YouTube Remover is an independent project and is not affiliated with YouTube or Google.
 
@@ -73,9 +83,6 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 4. **Stay in control while videos are removed**
    Show determinate removal progress and the Cancel button.
 
-5. **Finished videos gone. Unfinished videos kept.**
-   Show the cleaned playlist with partially watched entries remaining.
-
 ## What's new in 1.1.0
 
 • More reliable menu integration across Watch Later and custom playlists
@@ -89,7 +96,7 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 
 ## Store metadata links
 
-- Homepage: `https://7evenk.github.io/`
+- Homepage: `https://7evenk.github.io/watched-videos.html`
 - Support URL: `https://github.com/7evenk/WatchedVideosOnYouTubeRemover/issues`
 - Source code: `https://github.com/7evenk/WatchedVideosOnYouTubeRemover`
 
@@ -99,4 +106,4 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 - Verify cancellation during both loading and removal.
 - Verify Watch Later and a custom editable playlist.
 - Confirm the privacy disclosure still matches the packaged code.
-- Replace old screenshots that mention manual scrolling.
+- Upload the four English screenshots from `screenshots/store-1.1.0/en/`.

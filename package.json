@@ -1,0 +1,8 @@
+{
+  "name": "watched-videos-on-youtube-remover",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

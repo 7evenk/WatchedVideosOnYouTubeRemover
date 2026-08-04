@@ -1,318 +1,574 @@
-let mutationObserver;
-let actionsMenuReadyDispatched = false;
-let waitAfterFirstElMatch = false;
-const actionsMenuReady = new CustomEvent('actionsMenuReady');
+(() => {
+    'use strict';
 
-function onWatchLaterUrl() {
-    mutationObserver = new MutationObserver(function (mutations) {
-        mutations.forEach(async function (mutation, index) {
-            if (actionsMenuReadyDispatched && !document.querySelector('#delComplWatched'))
-                actionsMenuReadyDispatched = false;
-            if (!actionsMenuReadyDispatched) {
-                let actionMenu = null;
-                let queriedElement = elementToObserve.querySelector('ytd-menu-popup-renderer > tp-yt-paper-listbox');
-                if (isWatchLaterUrl) {
-                    if (queriedElement && queriedElement.lastElementChild && queriedElement.lastElementChild.tagName == 'YTD-MENU-NAVIGATION-ITEM-RENDERER') {
-                        actionMenu = queriedElement;
-                    }
-                } else {
-                    if (queriedElement && queriedElement.lastElementChild && queriedElement.childElementCount == 5) {
-                        actionMenu = queriedElement;
-                    }
-                }
-                if (actionMenu) {
-                    document.dispatchEvent(actionsMenuReady);
-                    actionsMenuReadyDispatched = true;
-                }
-            }
-        });
-    });
+    const helpers = globalThis.WVOYTRHelpers;
+    const IDS = {
+        action: 'wvoytr-remove-watched',
+        dialog: 'wvoytr-dialog',
+        dialogBackdrop: 'wvoytr-dialog-backdrop',
+        progress: 'wvoytr-progress',
+        progressBar: 'wvoytr-progress-bar',
+        progressTitle: 'wvoytr-progress-title',
+        progressText: 'wvoytr-progress-text',
+        progressNote: 'wvoytr-progress-note',
+        progressCancel: 'wvoytr-progress-cancel',
+        toast: 'wvoytr-toast'
+    };
+    const SELECTORS = {
+        popupContainer: 'ytd-popup-container',
+        menuList: 'ytd-menu-popup-renderer tp-yt-paper-listbox',
+        videos: 'ytd-playlist-video-renderer',
+        videoMenuButton: '#menu #interaction, #menu button, ytd-menu-renderer button',
+        progress: '#progress'
+    };
+    const MENU_WAIT_TIMEOUT = 5000;
+    const DELETE_WAIT_TIMEOUT = 5000;
+    const LAZY_LOAD_DELAY = 800;
+    const MAX_LAZY_LOAD_ROUNDS = 300;
+    const MAX_CONSECUTIVE_FAILURES = 3;
+    const BETWEEN_REMOVALS_DELAY = 250;
+    const TRANSLATIONS = {
+        en: {
+            action: 'Remove watched videos',
+            threshold: 'Threshold',
+            thresholdAria: 'Watched percentage threshold',
+            dialogTitle: 'Remove watched videos?',
+            dialogMessage: (threshold) => `The complete playlist will be loaded. All videos watched at least ${threshold}% will then be removed.`,
+            cancel: 'Cancel',
+            confirm: 'Remove videos',
+            loadingTitle: 'Loading playlist',
+            loading: (count, total) => total ? `${count} of ${total} videos loaded` : `${count} videos loaded`,
+            loadingNote: 'YouTube is scrolling through the playlist automatically.',
+            removingTitle: 'Removing watched videos',
+            removing: (processed, total) => `${processed} of ${total} videos processed`,
+            cancelling: 'Cancelling…',
+            cancelled: 'Cleanup was cancelled.',
+            noneFound: (threshold) => `No videos watched at least ${threshold}% were found.`,
+            partialResult: (removed, failed) => `Removed ${removed} videos; ${failed} could not be removed.`,
+            result: (removed) => `Removed ${removed} watched video${removed === 1 ? '' : 's'}.`,
+            repeatedFailure: (failed) => `Cleanup stopped after ${failed} consecutive removal failures. Reload YouTube and try again.`,
+            failed: 'Cleanup stopped because YouTube changed or did not finish loading.'
+        },
+        de: {
+            action: 'Gesehene Videos entfernen',
+            threshold: 'Schwellenwert',
+            thresholdAria: 'Schwellenwert für den angesehenen Prozentsatz',
+            dialogTitle: 'Gesehene Videos entfernen?',
+            dialogMessage: (threshold) => `Die vollständige Playlist wird geladen. Anschließend werden alle Videos entfernt, die zu mindestens ${threshold} % angesehen wurden.`,
+            cancel: 'Abbrechen',
+            confirm: 'Videos entfernen',
+            loadingTitle: 'Playlist wird geladen',
+            loading: (count, total) => total ? `${count} von ${total} Videos geladen` : `${count} Videos geladen`,
+            loadingNote: 'YouTube scrollt automatisch durch die Playlist.',
+            removingTitle: 'Gesehene Videos werden entfernt',
+            removing: (processed, total) => `${processed} von ${total} Videos verarbeitet`,
+            cancelling: 'Wird abgebrochen…',
+            cancelled: 'Die Bereinigung wurde abgebrochen.',
+            noneFound: (threshold) => `Keine zu mindestens ${threshold} % angesehenen Videos gefunden.`,
+            partialResult: (removed, failed) => `${removed} Videos entfernt; ${failed} konnten nicht entfernt werden.`,
+            result: (removed) => `${removed} gesehene${removed === 1 ? 's Video' : ' Videos'} entfernt.`,
+            repeatedFailure: (failed) => `Die Bereinigung wurde nach ${failed} aufeinanderfolgenden Fehlern beendet. Lade YouTube neu und versuche es erneut.`,
+            failed: 'Die Bereinigung wurde abgebrochen, weil YouTube geändert wurde oder nicht vollständig geladen hat.'
+        }
+    };
 
-    document.addEventListener('actionsMenuReady', async () => {
-        await customizeActionsMenu();
-    });
+    let popupObserver;
+    let navigationObserver;
+    let running = false;
+    let cancelRequested = false;
 
-    function waitUntilActionsMenuIsReady() {
-        return new Promise((resolve) => {
-            const handleEvent = () => {
-                console.log('actionsMenuReady!!!');
-                document.removeEventListener('actionsMenuReady', handleEvent);
-                resolve();
-            };
-            document.addEventListener('actionsMenuReady', handleEvent);
-        });
+    function strings() {
+        const language = (document.documentElement.lang || navigator.language || 'en').toLowerCase();
+        return language.startsWith('de') ? TRANSLATIONS.de : TRANSLATIONS.en;
     }
 
-    async function customizeActionsMenu() {
-        observeMenuPopupRenderer();
-        await waitUntilActionsMenuIsReady();
-
-        let delComplWatchedAdded = document.querySelector('#delComplWatched') != null;
-        if (!delComplWatchedAdded) {
-            let delItem = document.querySelectorAll("ytd-menu-service-item-renderer")[document.querySelectorAll("ytd-menu-service-item-renderer").length - 1];
-            let delItem2 = document.querySelectorAll("ytd-menu-navigation-item-renderer")[document.querySelectorAll("ytd-menu-navigation-item-renderer").length - 1];
-            let text = '';
-            if (delItem)
-                text = delItem.querySelector('yt-formatted-string').textContent;
-            let text2 = '';
-            if (delItem2)
-                text2 = delItem2.querySelector('yt-formatted-string').textContent;
-
-            const item = document.createElement('div');
-            item.setAttribute('id', 'delComplWatched');
-            item.classList.add('wvoytr-action-menu-item');
-            item.style.cursor = 'pointer';
-            item.style.fontSize = '14px';
-            item.style.padding = '4px 0';
-            item.style.overflow = 'hidden';
-            item.style.alignItems = 'center';
-            const logo = document.createElement('img');
-            logo.src = chrome.runtime.getURL("images/icon16.png");
-
-            if (delItem) {
-                delItem.parentElement.appendChild(item);
-            } else if (delItem2) {
-                delItem2.parentElement.appendChild(item);
-            }
-
-            let delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
-            delComplWatchedVideosBtn.style.display = 'flex';
-            delComplWatchedVideosBtn.style.marginTop = '2px';
-
-            const logoDiv = document.createElement('div');
-            logoDiv.style.marginLeft = '8px';
-            logoDiv.style.display = 'flex';
-            //logoDiv.style.justifyContent = 'center';
-            //logoDiv.style.alignItems = 'center';
-            logoDiv.appendChild(logo);
-
-            const textDiv = document.createElement('div');
-            textDiv.style.marginLeft = '8px';
-            textDiv.style.marginRight = '8px';
-            textDiv.style.whiteSpace = 'nowrap';
-            textDiv.innerHTML = text === 'Videos hinzufügen' || text === 'Playlist löschen' || text2 === 'Gesehene Videos entfernen' ? 'Vollständig gesehene Videos entfernen' : 'Remove completely watched videos';
-
-            delComplWatchedVideosBtn.appendChild(logoDiv);
-            delComplWatchedVideosBtn.appendChild(textDiv);
-
-            // Input field for percentage threshold
-            const percentageInputDiv = document.createElement('div');
-            percentageInputDiv.style.display = 'flex';
-            percentageInputDiv.style.alignItems = 'center';
-            percentageInputDiv.style.marginLeft = '8px';
-            percentageInputDiv.style.marginRight = '8px';
-            percentageInputDiv.style.marginTop = '0';
-
-            // Label for the input
-            const percentageLabel = document.createElement('span');
-            percentageLabel.innerHTML = 'Threshold: ';
-            percentageLabel.style.marginRight = '8px'; 
-
-            // Input field for percentage
-            const percentageInput = document.createElement('input');
-            percentageInput.type = 'number';
-            percentageInput.min = '0';
-            percentageInput.max = '100';
-            percentageInput.value = '100';
-            percentageInput.style.width = '50px';
-            percentageInput.style.padding = '4px';
-            percentageInput.style.margin = '0'; 
-            percentageInput.style.boxSizing = 'border-box';
-            percentageInput.style.height = 'auto';
-            
-            // Unit for percentage
-            const percentageUnit = document.createElement('span');
-            percentageUnit.innerHTML = '%';
-            percentageUnit.style.marginLeft = '8px';
-            percentageUnit.style.marginRight = '4px';
-
-            // Append elements
-            percentageInputDiv.appendChild(percentageLabel);
-            percentageInputDiv.appendChild(percentageInput);
-            percentageInputDiv.appendChild(percentageUnit);
-
-            // Append the percentage div to the main container
-            delComplWatchedVideosBtn.appendChild(percentageInputDiv);
-
-            // Event listener for removing videos
-            delComplWatchedVideosBtn.addEventListener('click', async (event) => {
-                if (event.target === percentageInput || event.target === percentageLabel) {
-                    event.stopPropagation();
-                    return;
-                }
-
-                const userPercentage = parseInt(percentageInput.value, 10) || 100;
-                console.log(`Removing videos watched at least ${userPercentage}%`);
-
-                list = document.querySelector("#contents .ytd-section-list-renderer").querySelector("#contents").querySelector("#contents").querySelectorAll("ytd-playlist-video-renderer");
-
-                remove(userPercentage);
-
-                document.querySelector("ytd-playlist-header-renderer").click();
-            });
-
-            // Use MutationObserver to remove max-width after the element is rendered
-            const popupRenderer = document.querySelector("ytd-menu-popup-renderer");
-            const popupObserver = new MutationObserver(function (mutations) {
-                mutations.forEach((mutation) => {
-                    if (mutation.attributeName === "style" && popupRenderer.style.maxWidth) {
-                        popupRenderer.style.maxWidth = 'none'; // Remove the max-width
-                    }
-                });
-            });
-
-            // Observe changes to the styles of the popup renderer
-            popupObserver.observe(popupRenderer, { attributes: true });
+    function isPlaylistPage(url = location.href) {
+        try {
+            const parsed = new URL(url);
+            return parsed.hostname === 'www.youtube.com' &&
+                parsed.pathname === '/playlist' &&
+                Boolean(parsed.searchParams.get('list'));
+        } catch {
+            return false;
         }
     }
 
-    function observeMenuPopupRenderer() {
-        const menuPopupRendererObserver = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    const target = mutation.target;
-                    if (target.style.maxHeight !== '') {
-                        target.style.maxHeight = '';
-                    }
-                }
-            }
-        });
-
-        const menuPopupRenderer = document.querySelector('ytd-menu-popup-renderer');
-        if (menuPopupRenderer) {
-            menuPopupRendererObserver.observe(menuPopupRenderer, {
-                attributes: true,
-                attributeFilter: ['style'],
-            });
-        }
+    function isWatchLaterPage() {
+        return new URL(location.href).searchParams.get('list') === 'WL';
     }
-
-    let elementToObserve = document.querySelector('ytd-popup-container');
-    mutationObserver.observe(elementToObserve, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-    });
 
     function wait(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    async function remove(userPercentage) {
-        let list = document.querySelectorAll("ytd-playlist-video-renderer");
+    function visibleMenuLists() {
+        return Array.from(document.querySelectorAll(SELECTORS.menuList))
+            .filter((list) => list.offsetParent !== null);
+    }
 
-        let totalItemsToRemove = 0;
-        for (let el of list) {
-            let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && parseFloat(pgBar.style.width) >= userPercentage) {
-                totalItemsToRemove++;
+    function closeVisibleMenus() {
+        for (const list of visibleMenuLists()) {
+            const dropdown = list.closest('tp-yt-iron-dropdown');
+            if (typeof dropdown?.close === 'function') dropdown.close();
+        }
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Escape',
+            code: 'Escape',
+            bubbles: true
+        }));
+    }
+
+    async function closeMenusAndWait(timeout = 1000) {
+        closeVisibleMenus();
+        const startedAt = Date.now();
+        while (visibleMenuLists().length && Date.now() - startedAt < timeout) {
+            await wait(50);
+        }
+        if (visibleMenuLists().length) throw new Error('Could not close the previous menu');
+    }
+
+    function waitForNewVisibleMenu(previousMenus, timeout = MENU_WAIT_TIMEOUT) {
+        const startedAt = Date.now();
+        return new Promise((resolve, reject) => {
+            const check = () => {
+                const menu = visibleMenuLists().find((list) => !previousMenus.has(list));
+                if (menu) return resolve(menu);
+                if (Date.now() - startedAt >= timeout) {
+                    reject(new Error('Timed out waiting for the video menu'));
+                    return;
+                }
+                requestAnimationFrame(check);
+            };
+            check();
+        });
+    }
+
+    function waitForElement(selector, { root = document, timeout = MENU_WAIT_TIMEOUT } = {}) {
+        const existing = root.querySelector(selector);
+        if (existing) return Promise.resolve(existing);
+
+        return new Promise((resolve, reject) => {
+            const observer = new MutationObserver(() => {
+                const element = root.querySelector(selector);
+                if (element) {
+                    clearTimeout(timer);
+                    observer.disconnect();
+                    resolve(element);
+                }
+            });
+            const timer = setTimeout(() => {
+                observer.disconnect();
+                reject(new Error(`Timed out waiting for ${selector}`));
+            }, timeout);
+            observer.observe(root === document ? document.documentElement : root, {
+                childList: true,
+                subtree: true
+            });
+        });
+    }
+
+    function createActionItem(menuList) {
+        if (menuList.querySelector(`#${IDS.action}`) || document.getElementById(IDS.action)) return;
+
+        const popupRenderer = menuList.closest('ytd-menu-popup-renderer');
+        const dropdown = popupRenderer?.closest('tp-yt-iron-dropdown');
+        popupRenderer?.classList.add('wvoytr-expanded-menu');
+        dropdown?.classList.add('wvoytr-expanded-dropdown');
+
+        const item = document.createElement('div');
+        item.id = IDS.action;
+        item.className = 'wvoytr-action-menu-item';
+        item.setAttribute('role', 'menuitem');
+        item.tabIndex = 0;
+
+        const icon = document.createElement('img');
+        icon.src = chrome.runtime.getURL('images/icon16.png');
+        icon.alt = '';
+        icon.className = 'wvoytr-action-icon';
+
+        const label = document.createElement('span');
+        label.className = 'wvoytr-action-label';
+        label.textContent = strings().action;
+
+        const thresholdGroup = document.createElement('label');
+        thresholdGroup.className = 'wvoytr-threshold';
+        thresholdGroup.textContent = strings().threshold;
+
+        const threshold = document.createElement('input');
+        threshold.type = 'number';
+        threshold.min = '0';
+        threshold.max = '100';
+        threshold.step = '1';
+        threshold.value = '95';
+        threshold.setAttribute('aria-label', strings().thresholdAria);
+
+        const unit = document.createElement('span');
+        unit.textContent = '%';
+
+        thresholdGroup.append(threshold, unit);
+        item.append(icon, label, thresholdGroup);
+        menuList.appendChild(item);
+
+        threshold.addEventListener('click', (event) => event.stopPropagation());
+        threshold.addEventListener('keydown', (event) => event.stopPropagation());
+        item.addEventListener('click', () => {
+            closeVisibleMenus();
+            startCleanup(threshold);
+        });
+        item.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                closeVisibleMenus();
+                startCleanup(threshold);
             }
+        });
+
+        // YouTube measures the popup before extensions can add their entries.
+        // Refit it after our wider content has participated in layout.
+        requestAnimationFrame(() => {
+            if (typeof dropdown?.refit === 'function') dropdown.refit();
+        });
+    }
+
+    function inspectPopup() {
+        if (!isPlaylistPage()) return;
+        const lists = document.querySelectorAll(SELECTORS.menuList);
+        for (const list of lists) {
+            if (list.offsetParent !== null) createActionItem(list);
+        }
+    }
+
+    function observePopup() {
+        const popupContainer = document.querySelector(SELECTORS.popupContainer);
+        if (!popupContainer) return;
+        popupObserver?.disconnect();
+        popupObserver = new MutationObserver(inspectPopup);
+        popupObserver.observe(popupContainer, { childList: true, subtree: true });
+        inspectPopup();
+    }
+
+    function createStatusUi() {
+        if (!document.getElementById(IDS.progress)) {
+            const container = document.createElement('div');
+            container.id = IDS.progress;
+            container.hidden = true;
+            container.setAttribute('role', 'status');
+            container.setAttribute('aria-live', 'polite');
+
+            const header = document.createElement('div');
+            header.className = 'wvoytr-progress-header';
+            const title = document.createElement('strong');
+            title.id = IDS.progressTitle;
+            const cancelButton = document.createElement('button');
+            cancelButton.id = IDS.progressCancel;
+            cancelButton.type = 'button';
+            cancelButton.addEventListener('click', () => {
+                cancelRequested = true;
+                cancelButton.disabled = true;
+                cancelButton.textContent = strings().cancelling;
+            });
+            header.append(title, cancelButton);
+
+            const text = document.createElement('div');
+            text.id = IDS.progressText;
+            const track = document.createElement('div');
+            track.className = 'wvoytr-progress-track';
+            const bar = document.createElement('div');
+            bar.id = IDS.progressBar;
+            track.appendChild(bar);
+            const note = document.createElement('div');
+            note.id = IDS.progressNote;
+            container.append(header, text, track, note);
+            document.body.appendChild(container);
+        }
+        if (!document.getElementById(IDS.toast)) {
+            const toast = document.createElement('div');
+            toast.id = IDS.toast;
+            toast.hidden = true;
+            toast.setAttribute('role', 'status');
+            toast.setAttribute('aria-live', 'polite');
+            document.body.appendChild(toast);
+        }
+    }
+
+    function confirmCleanup(threshold) {
+        const copy = strings();
+        const previousFocus = document.activeElement;
+        document.getElementById(IDS.dialogBackdrop)?.remove();
+
+        const backdrop = document.createElement('div');
+        backdrop.id = IDS.dialogBackdrop;
+
+        const dialog = document.createElement('div');
+        dialog.id = IDS.dialog;
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', 'wvoytr-dialog-title');
+        dialog.setAttribute('aria-describedby', 'wvoytr-dialog-message');
+
+        const title = document.createElement('h2');
+        title.id = 'wvoytr-dialog-title';
+        title.textContent = copy.dialogTitle;
+
+        const message = document.createElement('p');
+        message.id = 'wvoytr-dialog-message';
+        message.textContent = copy.dialogMessage(threshold);
+
+        const actions = document.createElement('div');
+        actions.className = 'wvoytr-dialog-actions';
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.className = 'wvoytr-dialog-cancel';
+        cancelButton.textContent = copy.cancel;
+        const confirmButton = document.createElement('button');
+        confirmButton.type = 'button';
+        confirmButton.className = 'wvoytr-dialog-confirm';
+        confirmButton.textContent = copy.confirm;
+        actions.append(cancelButton, confirmButton);
+        dialog.append(title, message, actions);
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        return new Promise((resolve) => {
+            function finish(confirmed) {
+                document.removeEventListener('keydown', handleKeydown, true);
+                backdrop.remove();
+                if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+                resolve(confirmed);
+            }
+            function handleKeydown(event) {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    finish(false);
+                } else if (event.key === 'Tab') {
+                    const target = document.activeElement === confirmButton ? cancelButton : confirmButton;
+                    event.preventDefault();
+                    target.focus();
+                }
+            }
+            cancelButton.addEventListener('click', () => finish(false), { once: true });
+            confirmButton.addEventListener('click', () => finish(true), { once: true });
+            backdrop.addEventListener('click', (event) => {
+                if (event.target === backdrop) finish(false);
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            confirmButton.focus();
+        });
+    }
+
+    function updateProgress(processed, total, message, phase = 'removing') {
+        createStatusUi();
+        const copy = strings();
+        const container = document.getElementById(IDS.progress);
+        const percentage = total ? Math.round((processed / total) * 100) : 0;
+        container.hidden = false;
+        container.dataset.phase = phase;
+        document.getElementById(IDS.progressBar).style.width = `${percentage}%`;
+        document.getElementById(IDS.progressText).textContent = message || `${processed} / ${total}`;
+        document.getElementById(IDS.progressTitle).textContent = phase === 'loading' ? copy.loadingTitle : copy.removingTitle;
+        document.getElementById(IDS.progressNote).textContent = phase === 'loading' ? copy.loadingNote : '';
+        const cancelButton = document.getElementById(IDS.progressCancel);
+        cancelButton.textContent = cancelRequested ? copy.cancelling : copy.cancel;
+        cancelButton.disabled = cancelRequested;
+    }
+
+    function hideProgress() {
+        const progress = document.getElementById(IDS.progress);
+        if (progress) progress.hidden = true;
+    }
+
+    function showToast(message, isError = false) {
+        createStatusUi();
+        const toast = document.getElementById(IDS.toast);
+        toast.textContent = message;
+        toast.classList.toggle('wvoytr-error', isError);
+        toast.hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { toast.hidden = true; }, 6000);
+    }
+
+    function getLoadedVideos() {
+        return Array.from(document.querySelectorAll(SELECTORS.videos));
+    }
+
+    function getExpectedPlaylistCount() {
+        const header = document.querySelector('ytd-playlist-header-renderer');
+        if (!header) return null;
+        const text = header.textContent || '';
+        const match = text.match(/([\d.,\s]+)\s+(?:videos?|Videos?)/);
+        if (!match) return null;
+        const count = Number(match[1].replace(/\D/g, ''));
+        return Number.isFinite(count) && count > 0 ? count : null;
+    }
+
+    async function loadAllPlaylistVideos() {
+        const originalScrollY = window.scrollY;
+        const expectedCount = getExpectedPlaylistCount();
+        let previousCount = -1;
+        let stableRounds = 0;
+
+        for (let round = 0; round < MAX_LAZY_LOAD_ROUNDS && stableRounds < 6; round++) {
+            if (cancelRequested) break;
+            const count = getLoadedVideos().length;
+            updateProgress(0, 0, strings().loading(count, expectedCount), 'loading');
+            if (expectedCount && count >= expectedCount) break;
+            stableRounds = count === previousCount ? stableRounds + 1 : 0;
+            previousCount = count;
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'auto' });
+            await wait(LAZY_LOAD_DELAY);
         }
 
-        const progressBarContainer = document.querySelector('#progressBarContainer');
-        progressBarContainer.style.display = 'block';
+        window.scrollTo({ top: originalScrollY, behavior: 'auto' });
+        await wait(150);
+        return { videos: getLoadedVideos(), cancelled: cancelRequested };
+    }
 
-        let itemsProcessed = 0;
-        for (let el of list) {
-            let pgBar = el.querySelectorAll("#content")[0].querySelector("#progress");
-            if (pgBar && parseFloat(pgBar.style.width) >= userPercentage) {
-                el.querySelector("#menu").querySelector("#interaction").click();
-                await wait(500);
-                if (document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display == '') {
-                    if (isWatchLaterUrl) {
-                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[2].click();
-                    } else {
-                        document.querySelector("ytd-menu-popup-renderer").querySelector("tp-yt-paper-listbox").children[3].click();
+    function watchedPercentage(video) {
+        const progress = video.querySelector(SELECTORS.progress);
+        if (!progress) return null;
+        return helpers.parsePercentage(progress.style.width || progress.getAttribute('style'));
+    }
+
+    function findRemoveCommand(menuList) {
+        const serviceItems = Array.from(menuList.querySelectorAll('ytd-menu-service-item-renderer'));
+        const navigationItems = Array.from(menuList.querySelectorAll('ytd-menu-navigation-item-renderer'));
+        const candidates = [...serviceItems, ...navigationItems]
+            .filter((item) => item.id !== IDS.action && item.offsetParent !== null);
+
+        return candidates.find((item) => helpers.isRemoveMenuText(item.textContent)) || null;
+    }
+
+    async function removeVideo(video) {
+        video.scrollIntoView({ block: 'center', behavior: 'auto' });
+        await wait(100);
+
+        const menuButton = video.querySelector(SELECTORS.videoMenuButton);
+        if (!menuButton) throw new Error('Video menu button not found');
+
+        await closeMenusAndWait();
+        const previousMenus = new Set(visibleMenuLists());
+        menuButton.click();
+
+        const menuList = await waitForNewVisibleMenu(previousMenus);
+        const removeCommand = findRemoveCommand(menuList);
+        if (!removeCommand) throw new Error('Remove command not found');
+
+        removeCommand.click();
+        await new Promise((resolve, reject) => {
+            const observer = new MutationObserver(() => {
+                if (!video.isConnected) {
+                    clearTimeout(timer);
+                    observer.disconnect();
+                    resolve();
+                }
+            });
+            const timer = setTimeout(() => {
+                observer.disconnect();
+                reject(new Error('Video was not removed before timeout'));
+            }, DELETE_WAIT_TIMEOUT);
+            observer.observe(video.parentElement || document.body, { childList: true, subtree: true });
+        });
+    }
+
+    async function startCleanup(thresholdInput) {
+        if (running) return;
+        const threshold = helpers.clampThreshold(thresholdInput.value, 95);
+        thresholdInput.value = String(threshold);
+
+        if (!await confirmCleanup(threshold)) return;
+
+        running = true;
+        cancelRequested = false;
+        popupObserver?.disconnect();
+        let removed = 0;
+        let failed = 0;
+        let consecutiveFailures = 0;
+        try {
+            const loadResult = await loadAllPlaylistVideos();
+            if (loadResult.cancelled) {
+                showToast(strings().cancelled);
+                return;
+            }
+            const loadedVideos = loadResult.videos;
+            const targets = loadedVideos.filter((video) => {
+                const percentage = watchedPercentage(video);
+                return percentage !== null && percentage >= threshold;
+            });
+
+            if (!targets.length) {
+                showToast(strings().noneFound(threshold));
+                return;
+            }
+
+            for (const video of targets) {
+                if (cancelRequested) break;
+                if (!video.isConnected) continue;
+                updateProgress(
+                    removed + failed,
+                    targets.length,
+                    strings().removing(removed + failed, targets.length)
+                );
+                try {
+                    await removeVideo(video);
+                    removed++;
+                    consecutiveFailures = 0;
+                } catch (error) {
+                    console.warn('[WVOYTR] Could not remove a video:', error);
+                    failed++;
+                    consecutiveFailures++;
+                    closeVisibleMenus();
+                    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                        showToast(strings().repeatedFailure(consecutiveFailures), true);
+                        return;
                     }
                 }
-                await wait(1000);
-                itemsProcessed++;
-                updateProgressBar((itemsProcessed / totalItemsToRemove) * 100);
+                await wait(BETWEEN_REMOVALS_DELAY);
             }
+
+            if (cancelRequested) {
+                showToast(strings().cancelled);
+                return;
+            }
+            updateProgress(targets.length, targets.length, strings().removing(targets.length, targets.length));
+            showToast(
+                failed
+                    ? strings().partialResult(removed, failed)
+                    : strings().result(removed),
+                failed > 0
+            );
+        } catch (error) {
+            console.error('[WVOYTR] Cleanup failed:', error);
+            showToast(strings().failed, true);
+        } finally {
+            running = false;
+            if (isPlaylistPage()) observePopup();
+            setTimeout(hideProgress, 800);
         }
-        document.querySelector("ytd-popup-container tp-yt-iron-dropdown").style.display = 'none';
-        hideProgressBar();
     }
-}
 
-const regex = /^https:\/\/www\.youtube\.com\/playlist\?list=.+$/;
-let isWatchLaterUrl = false;
+    function syncWithNavigation() {
+        document.getElementById(IDS.action)?.remove();
+        if (!isPlaylistPage()) {
+            popupObserver?.disconnect();
+            hideProgress();
+            return;
+        }
+        createStatusUi();
+        observePopup();
+    }
 
-function checkAndUpdate() {
-    isWatchLaterUrl = false;
-    if (window.location.href === "https://www.youtube.com/playlist?list=WL") {
-        createProgressBar();
-        onWatchLaterUrl();
-        isWatchLaterUrl = true;
-    } else if (regex.test(window.location.href)) {
-        createProgressBar();
-        onWatchLaterUrl();
+    function init() {
+        syncWithNavigation();
+        document.addEventListener('yt-navigate-finish', syncWithNavigation);
+        navigationObserver = new MutationObserver(() => {
+            if (isPlaylistPage() && !popupObserver) observePopup();
+        });
+        navigationObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true });
     } else {
-        if (mutationObserver) {
-            mutationObserver.disconnect();
-        }
-
-        const delComplWatchedVideosBtn = document.querySelector("#delComplWatched");
-        if (delComplWatchedVideosBtn) {
-            delComplWatchedVideosBtn.remove();
-        }
-        actionsMenuReadyDispatched = false;
-        waitAfterFirstElMatch = false;
+        init();
     }
-}
-
-checkAndUpdate();
-
-const targetNode = document.querySelector('title');
-const config = { childList: true };
-
-const callback = function (mutationsList, observer) {
-    for (let mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            checkAndUpdate();
-        }
-    }
-};
-
-const observer = new MutationObserver(callback);
-observer.observe(targetNode, config);
-
-function createProgressBar() {
-    if (document.querySelector('#progressBarContainer')) {
-        return;
-    }
-
-    const progressBarContainer = document.createElement('div');
-    progressBarContainer.style.position = 'fixed';
-    progressBarContainer.style.top = '0';
-    progressBarContainer.style.left = '0';
-    progressBarContainer.style.width = '100%';
-    progressBarContainer.style.height = '5px';
-    progressBarContainer.style.backgroundColor = '#ddd';
-    progressBarContainer.style.zIndex = '9999';
-    progressBarContainer.style.display = 'none';
-    progressBarContainer.id = 'progressBarContainer';
-
-    const progressBar = document.createElement('div');
-    progressBar.style.height = '5px';
-    progressBar.style.width = '0%';
-    progressBar.style.backgroundColor = '#4CAF50';
-    progressBar.id = 'progressBar';
-
-    progressBarContainer.appendChild(progressBar);
-    document.body.appendChild(progressBarContainer);
-}
-
-function updateProgressBar(percentage) {
-    const progressBar = document.querySelector('#progressBar');
-    if (progressBar) {
-        progressBar.style.width = `${percentage}%`;
-    }
-}
-
-function hideProgressBar() {
-    const progressBarContainer = document.querySelector('#progressBarContainer');
-    if (progressBarContainer) {
-        progressBarContainer.style.display = 'none';
-    }
-}
+})();

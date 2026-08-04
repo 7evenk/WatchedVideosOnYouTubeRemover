@@ -17,7 +17,7 @@
         return Number.isFinite(number) ? number : null;
     }
 
-    function clampThreshold(value, fallback = 95) {
+    function clampThreshold(value, fallback = 100) {
         const parsed = parsePercentage(value);
         if (parsed === null) return fallback;
         return Math.min(100, Math.max(0, Math.round(parsed)));

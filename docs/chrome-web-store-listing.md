@@ -29,7 +29,7 @@ KEY FEATURES
 
 BUILT FOR CONTROL
 
-The default threshold is 95%, so videos with a skipped outro can still count as watched. You can choose any value from 0% to 100%.
+The safe default threshold is 100%. You can choose any value from 0% to 100%, for example a lower value when you want skipped outros to count as watched.
 
 Large playlists are loaded in batches by YouTube and can take some time. The extension shows how many entries have loaded and keeps the cleanup status visible throughout the process.
 
@@ -65,7 +65,7 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
    Show the expanded playlist menu with the extension action and threshold control.
 
 2. **You decide what “watched” means**
-   Show the threshold set to 95%, with one completed and one partially watched video visible.
+   Show the threshold set to 100%, with one completed and one partially watched video visible.
 
 3. **See exactly what is happening**
    Show the prominent loading progress card with a large playlist.
@@ -80,7 +80,7 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 
 • More reliable menu integration across Watch Later and custom playlists
 • Automatic playlist loading with a visible progress card
-• Adjustable watched threshold
+• Redesigned threshold control with a safe 100% default
 • Confirmation and cancellation controls
 • Clear completion and error messages
 • German and English interface

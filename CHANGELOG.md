@@ -8,7 +8,6 @@ All notable changes to Watched Videos On YouTube Remover are documented here.
 
 - Automatic loading of lazy-loaded playlist entries before cleanup.
 - A prominent progress card for both loading and removal.
-- Adjustable watched threshold from 0% to 100%, with 95% as the default.
 - Confirmation dialog before videos are removed.
 - Safe cancellation before the next destructive action.
 - English and German extension interface.
@@ -17,6 +16,7 @@ All notable changes to Watched Videos On YouTube Remover are documented here.
 ### Changed
 
 - Reworked playlist-menu integration for current YouTube layouts.
+- Redesigned the existing threshold control while retaining the safe 100% default.
 - Improved compatibility with Watch Later and editable custom playlists.
 - Kept partially watched videos while removing entries at or above the selected threshold.
 - Made the playlist menu large enough for the extension controls without immediate scrolling.

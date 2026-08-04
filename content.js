@@ -199,7 +199,7 @@
         threshold.min = '0';
         threshold.max = '100';
         threshold.step = '1';
-        threshold.value = '95';
+        threshold.value = '100';
         threshold.setAttribute('aria-label', strings().thresholdAria);
 
         const unit = document.createElement('span');
@@ -472,7 +472,7 @@
 
     async function startCleanup(thresholdInput) {
         if (running) return;
-        const threshold = helpers.clampThreshold(thresholdInput.value, 95);
+        const threshold = helpers.clampThreshold(thresholdInput.value, 100);
         thresholdInput.value = String(threshold);
 
         if (!await confirmCleanup(threshold)) return;

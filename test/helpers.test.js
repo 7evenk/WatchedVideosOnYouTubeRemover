@@ -14,7 +14,7 @@ test('clampThreshold accepts zero and clamps invalid ranges', () => {
     assert.equal(clampThreshold('0'), 0);
     assert.equal(clampThreshold('101'), 100);
     assert.equal(clampThreshold('-4'), 0);
-    assert.equal(clampThreshold('not a number', 95), 95);
+    assert.equal(clampThreshold('not a number'), 100);
 });
 
 test('remove menu labels are recognized without relying on menu positions', () => {

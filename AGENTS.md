@@ -16,7 +16,7 @@
 
 ## Chrome Web Store packaging
 
-- Runtime packages contain only `manifest.json`, `content.js`, `helpers.js`, `background.css`, and `images/` unless the manifest gains another runtime dependency.
+- Runtime packages contain only `manifest.json`, `content.js`, `helpers.js`, `background.css`, `LICENSE`, and `images/` unless the manifest gains another runtime dependency.
 - Never package `.git/`, `.tools/`, `test/`, `screenshots/`, `promoTiles/`, `package.json`, or other development-only files.
 
 ## External changes

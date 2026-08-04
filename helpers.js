@@ -9,6 +9,10 @@
         'rimuovi da', 'remover de',
         'удалить из', 'usuń z', 'verwijderen uit'
     ];
+    const PLAYLIST_MENU_LABELS = [
+        'add videos', 'add all to', 'playlist settings', 'delete playlist',
+        'videos hinzufügen', 'alle hinzufügen zu', 'playlist-einstellungen', 'playlist löschen'
+    ];
 
     function parsePercentage(value) {
         const match = String(value || '').match(/(-?\d+(?:[.,]\d+)?)\s*%?/);
@@ -28,7 +32,12 @@
         return REMOVE_LABELS.some((label) => normalized.includes(label));
     }
 
-    const api = { parsePercentage, clampThreshold, isRemoveMenuText };
+    function isPlaylistActionMenuText(value) {
+        const normalized = String(value || '').trim().toLocaleLowerCase();
+        return PLAYLIST_MENU_LABELS.some((label) => normalized.includes(label));
+    }
+
+    const api = { parsePercentage, clampThreshold, isPlaylistActionMenuText, isRemoveMenuText };
     root.WVOYTRHelpers = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

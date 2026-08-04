@@ -16,7 +16,7 @@
     };
     const SELECTORS = {
         popupContainer: 'ytd-popup-container',
-        menuList: 'ytd-menu-popup-renderer tp-yt-paper-listbox',
+        menuList: 'ytd-popup-container tp-yt-iron-dropdown tp-yt-paper-listbox, ytd-popup-container tp-yt-iron-dropdown yt-list-view-model',
         videos: 'ytd-playlist-video-renderer',
         videoMenuButton: '#menu #interaction, #menu button, ytd-menu-renderer button',
         progress: '#progress'
@@ -51,7 +51,7 @@
         },
         de: {
             action: 'Gesehene Videos entfernen',
-            threshold: 'Schwellenwert',
+            threshold: 'Schwelle',
             thresholdAria: 'Schwellenwert für den angesehenen Prozentsatz',
             dialogTitle: 'Gesehene Videos entfernen?',
             dialogMessage: (threshold) => `Die vollständige Playlist wird geladen. Anschließend werden alle Videos entfernt, die zu mindestens ${threshold} % angesehen wurden.`,
@@ -74,6 +74,7 @@
 
     let popupObserver;
     let navigationObserver;
+    let popupInspectionTimer;
     let running = false;
     let cancelRequested = false;
 
@@ -168,7 +169,9 @@
     }
 
     function createActionItem(menuList) {
-        if (menuList.querySelector(`#${IDS.action}`) || document.getElementById(IDS.action)) return;
+        if (menuList.querySelector(`#${IDS.action}`)) return;
+        document.getElementById(IDS.action)?.remove();
+        menuList.classList.toggle('wvoytr-modern-menu', menuList.matches('yt-list-view-model'));
 
         const popupRenderer = menuList.closest('ytd-menu-popup-renderer');
         const dropdown = popupRenderer?.closest('tp-yt-iron-dropdown');
@@ -234,17 +237,31 @@
         if (!isPlaylistPage()) return;
         const lists = document.querySelectorAll(SELECTORS.menuList);
         for (const list of lists) {
-            if (list.offsetParent !== null) createActionItem(list);
+            if (list.offsetParent !== null && helpers.isPlaylistActionMenuText(list.textContent)) {
+                createActionItem(list);
+            }
         }
+    }
+
+    function schedulePopupInspection() {
+        inspectPopup();
+        requestAnimationFrame(inspectPopup);
+        clearTimeout(popupInspectionTimer);
+        popupInspectionTimer = setTimeout(inspectPopup, 200);
     }
 
     function observePopup() {
         const popupContainer = document.querySelector(SELECTORS.popupContainer);
         if (!popupContainer) return;
         popupObserver?.disconnect();
-        popupObserver = new MutationObserver(inspectPopup);
-        popupObserver.observe(popupContainer, { childList: true, subtree: true });
-        inspectPopup();
+        popupObserver = new MutationObserver(schedulePopupInspection);
+        popupObserver.observe(popupContainer, {
+            attributes: true,
+            attributeFilter: ['aria-hidden', 'class', 'opened', 'style'],
+            childList: true,
+            subtree: true
+        });
+        schedulePopupInspection();
     }
 
     function createStatusUi() {
@@ -432,7 +449,8 @@
     function findRemoveCommand(menuList) {
         const serviceItems = Array.from(menuList.querySelectorAll('ytd-menu-service-item-renderer'));
         const navigationItems = Array.from(menuList.querySelectorAll('ytd-menu-navigation-item-renderer'));
-        const candidates = [...serviceItems, ...navigationItems]
+        const viewModelItems = Array.from(menuList.querySelectorAll('yt-list-item-view-model'));
+        const candidates = [...serviceItems, ...navigationItems, ...viewModelItems]
             .filter((item) => item.id !== IDS.action && item.offsetParent !== null);
 
         return candidates.find((item) => helpers.isRemoveMenuText(item.textContent)) || null;

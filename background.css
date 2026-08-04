@@ -8,6 +8,25 @@ ytd-menu-popup-renderer:has(#wvoytr-remove-watched) {
     width: max-content;
 }
 
+tp-yt-iron-dropdown:has(#wvoytr-remove-watched) yt-list-view-model {
+    box-sizing: border-box;
+    height: auto !important;
+    max-height: none !important;
+    min-width: 0;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    width: 100% !important;
+}
+
+tp-yt-iron-dropdown:has(.wvoytr-modern-menu) ytd-menu-popup-renderer {
+    min-width: 0 !important;
+    width: 100% !important;
+}
+
+tp-yt-iron-dropdown:has(#wvoytr-remove-watched) #contentWrapper {
+    overflow-x: hidden !important;
+}
+
 ytd-menu-popup-renderer.wvoytr-expanded-menu tp-yt-paper-listbox,
 ytd-menu-popup-renderer:has(#wvoytr-remove-watched) tp-yt-paper-listbox {
     box-sizing: border-box;
@@ -28,7 +47,7 @@ tp-yt-iron-dropdown.wvoytr-expanded-dropdown #contentWrapper {
 .wvoytr-action-menu-item {
     align-items: center;
     box-sizing: border-box;
-    color: var(--yt-spec-text-primary);
+    color: #0f0f0f;
     cursor: pointer;
     display: flex;
     font-family: Roboto, Arial, sans-serif;
@@ -39,10 +58,44 @@ tp-yt-iron-dropdown.wvoytr-expanded-dropdown #contentWrapper {
     width: 100%;
 }
 
+html[dark] .wvoytr-action-menu-item {
+    color: #f1f1f1;
+}
+
+.wvoytr-modern-menu .wvoytr-action-menu-item {
+    min-width: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.wvoytr-modern-menu .wvoytr-action-label {
+    min-width: 0;
+}
+
+.wvoytr-modern-menu .wvoytr-threshold {
+    margin-left: 10px;
+}
+
+.wvoytr-modern-menu .wvoytr-threshold input {
+    padding-left: 3px;
+    padding-right: 3px;
+    width: 58px;
+}
+
 .wvoytr-action-menu-item:hover,
 .wvoytr-action-menu-item:focus-visible {
     background: var(--yt-spec-10-percent-layer);
     outline: none;
+}
+
+.wvoytr-modern-menu .wvoytr-action-menu-item:hover,
+.wvoytr-modern-menu .wvoytr-action-menu-item:focus-visible {
+    background: rgba(0, 0, 0, .08);
+}
+
+html[dark] .wvoytr-modern-menu .wvoytr-action-menu-item:hover,
+html[dark] .wvoytr-modern-menu .wvoytr-action-menu-item:focus-visible {
+    background: rgba(255, 255, 255, .1);
 }
 
 .wvoytr-action-icon {
@@ -63,11 +116,11 @@ tp-yt-iron-dropdown.wvoytr-expanded-dropdown #contentWrapper {
 }
 
 .wvoytr-threshold input {
-    background: var(--yt-spec-general-background-a);
+    background: rgba(127, 127, 127, .16);
     border: 1px solid var(--yt-spec-10-percent-layer);
     border-radius: 4px;
     box-sizing: border-box;
-    color: var(--yt-spec-text-primary);
+    color: inherit;
     font: inherit;
     padding: 4px;
     width: 52px;

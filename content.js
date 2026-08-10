@@ -4,6 +4,7 @@
     const helpers = globalThis.WVOYTRHelpers;
     const IDS = {
         action: 'wvoytr-remove-watched',
+        dateAction: 'wvoytr-remove-by-date',
         dialog: 'wvoytr-dialog',
         dialogBackdrop: 'wvoytr-dialog-backdrop',
         progress: 'wvoytr-progress',
@@ -32,26 +33,37 @@
             action: 'Remove watched videos',
             threshold: 'Threshold',
             thresholdAria: 'Watched percentage threshold',
+            dateAction: 'Remove videos before date',
+            dateAria: 'Remove videos uploaded before this date',
+            dateRequired: 'Choose a date first.',
             dialogTitle: 'Remove watched videos?',
             dialogMessage: (threshold) => `The complete playlist will be loaded. All videos watched at least ${threshold}% will then be removed.`,
+            dateDialogTitle: 'Remove old videos?',
+            dateDialogMessage: (date) => `The complete playlist will be loaded. Videos uploaded before ${date} will then be removed, regardless of watch progress.`,
             cancel: 'Cancel',
             confirm: 'Remove videos',
             loadingTitle: 'Loading playlist',
             loading: (count, total) => total ? `${count} of ${total} videos loaded` : `${count} videos loaded`,
             loadingNote: 'YouTube is scrolling through the playlist automatically.',
-            removingTitle: 'Removing watched videos',
+            removingTitle: 'Removing videos',
             removing: (processed, total) => `${processed} of ${total} videos processed`,
             cancelling: 'Cancelling…',
             cancelled: 'Cleanup was cancelled.',
             noneFound: (threshold) => `No videos watched at least ${threshold}% were found.`,
+            noOldVideosFound: (date) => `No videos uploaded before ${date} were found. Videos without a recognizable upload date were kept.`,
             partialResult: (removed, failed) => `Removed ${removed} videos; ${failed} could not be removed.`,
-            result: (removed) => `Removed ${removed} watched video${removed === 1 ? '' : 's'}.`,
+            result: (removed) => `Removed ${removed} video${removed === 1 ? '' : 's'}.`,
             repeatedFailure: (failed) => `Cleanup stopped after ${failed} consecutive removal failures. Reload YouTube and try again.`,
             failed: 'Cleanup stopped because YouTube changed or did not finish loading.'
         },
         de: {
             action: 'Gesehene Videos entfernen',
             threshold: 'Schwelle',
+            dateAction: 'Videos vor Datum entfernen',
+            dateAria: 'Videos entfernen, die vor diesem Datum hochgeladen wurden',
+            dateRequired: 'Wähle zuerst ein Datum aus.',
+            dateDialogTitle: 'Alte Videos entfernen?',
+            dateDialogMessage: (date) => `Die vollständige Playlist wird geladen. Anschließend werden Videos entfernt, die vor dem ${date} hochgeladen wurden – unabhängig vom Wiedergabefortschritt.`,
             thresholdAria: 'Schwellenwert für den angesehenen Prozentsatz',
             dialogTitle: 'Gesehene Videos entfernen?',
             dialogMessage: (threshold) => `Die vollständige Playlist wird geladen. Anschließend werden alle Videos entfernt, die zu mindestens ${threshold} % angesehen wurden.`,
@@ -60,13 +72,14 @@
             loadingTitle: 'Playlist wird geladen',
             loading: (count, total) => total ? `${count} von ${total} Videos geladen` : `${count} Videos geladen`,
             loadingNote: 'YouTube scrollt automatisch durch die Playlist.',
-            removingTitle: 'Gesehene Videos werden entfernt',
+            removingTitle: 'Videos werden entfernt',
             removing: (processed, total) => `${processed} von ${total} Videos verarbeitet`,
             cancelling: 'Wird abgebrochen…',
             cancelled: 'Die Bereinigung wurde abgebrochen.',
             noneFound: (threshold) => `Keine zu mindestens ${threshold} % angesehenen Videos gefunden.`,
+            noOldVideosFound: (date) => `Keine Videos gefunden, die vor dem ${date} hochgeladen wurden. Videos ohne erkennbares Upload-Datum wurden behalten.`,
             partialResult: (removed, failed) => `${removed} Videos entfernt; ${failed} konnten nicht entfernt werden.`,
-            result: (removed) => `${removed} gesehene${removed === 1 ? 's Video' : ' Videos'} entfernt.`,
+            result: (removed) => `${removed} Video${removed === 1 ? '' : 's'} entfernt.`,
             repeatedFailure: (failed) => `Die Bereinigung wurde nach ${failed} aufeinanderfolgenden Fehlern beendet. Lade YouTube neu und versuche es erneut.`,
             failed: 'Die Bereinigung wurde abgebrochen, weil YouTube geändert wurde oder nicht vollständig geladen hat.'
         }
@@ -212,8 +225,34 @@
         item.append(icon, label, thresholdGroup);
         menuList.appendChild(item);
 
+        const dateItem = document.createElement('div');
+        dateItem.id = IDS.dateAction;
+        dateItem.className = 'wvoytr-action-menu-item wvoytr-date-action';
+        dateItem.setAttribute('role', 'menuitem');
+        dateItem.tabIndex = 0;
+
+        const dateIcon = icon.cloneNode();
+        const dateLabel = document.createElement('span');
+        dateLabel.className = 'wvoytr-action-label';
+        dateLabel.textContent = strings().dateAction;
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.className = 'wvoytr-date-input';
+        dateInput.setAttribute('aria-label', strings().dateAria);
+        const defaultDate = new Date();
+        defaultDate.setFullYear(defaultDate.getFullYear() - 1);
+        dateInput.value = [
+            defaultDate.getFullYear(),
+            String(defaultDate.getMonth() + 1).padStart(2, '0'),
+            String(defaultDate.getDate()).padStart(2, '0')
+        ].join('-');
+        dateItem.append(dateIcon, dateLabel, dateInput);
+        menuList.appendChild(dateItem);
+
         threshold.addEventListener('click', (event) => event.stopPropagation());
         threshold.addEventListener('keydown', (event) => event.stopPropagation());
+        dateInput.addEventListener('click', (event) => event.stopPropagation());
+        dateInput.addEventListener('keydown', (event) => event.stopPropagation());
         item.addEventListener('click', () => {
             closeVisibleMenus();
             startCleanup(threshold);
@@ -223,6 +262,17 @@
                 event.preventDefault();
                 closeVisibleMenus();
                 startCleanup(threshold);
+            }
+        });
+        dateItem.addEventListener('click', () => {
+            closeVisibleMenus();
+            startCleanupByDate(dateInput);
+        });
+        dateItem.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                closeVisibleMenus();
+                startCleanupByDate(dateInput);
             }
         });
 
@@ -308,7 +358,7 @@
         }
     }
 
-    function confirmCleanup(threshold) {
+    function confirmCleanup(dialogTitle, dialogMessage) {
         const copy = strings();
         const previousFocus = document.activeElement;
         document.getElementById(IDS.dialogBackdrop)?.remove();
@@ -325,11 +375,11 @@
 
         const title = document.createElement('h2');
         title.id = 'wvoytr-dialog-title';
-        title.textContent = copy.dialogTitle;
+        title.textContent = dialogTitle;
 
         const message = document.createElement('p');
         message.id = 'wvoytr-dialog-message';
-        message.textContent = copy.dialogMessage(threshold);
+        message.textContent = dialogMessage;
 
         const actions = document.createElement('div');
         actions.className = 'wvoytr-dialog-actions';
@@ -446,6 +496,15 @@
         return helpers.parsePercentage(progress.style.width || progress.getAttribute('style'));
     }
 
+    function uploadDate(video) {
+        const metadata = Array.from(video.querySelectorAll('#metadata-line span, .inline-metadata-item'));
+        for (const element of metadata) {
+            const parsed = helpers.parseUploadDate(element.textContent);
+            if (parsed) return parsed;
+        }
+        return helpers.parseUploadDate(video.textContent);
+    }
+
     function findRemoveCommand(menuList) {
         const serviceItems = Array.from(menuList.querySelectorAll('ytd-menu-service-item-renderer'));
         const navigationItems = Array.from(menuList.querySelectorAll('ytd-menu-navigation-item-renderer'));
@@ -488,13 +547,8 @@
         });
     }
 
-    async function startCleanup(thresholdInput) {
+    async function runCleanup({ matches, noneFoundMessage }) {
         if (running) return;
-        const threshold = helpers.clampThreshold(thresholdInput.value, 100);
-        thresholdInput.value = String(threshold);
-
-        if (!await confirmCleanup(threshold)) return;
-
         running = true;
         cancelRequested = false;
         popupObserver?.disconnect();
@@ -507,14 +561,10 @@
                 showToast(strings().cancelled);
                 return;
             }
-            const loadedVideos = loadResult.videos;
-            const targets = loadedVideos.filter((video) => {
-                const percentage = watchedPercentage(video);
-                return percentage !== null && percentage >= threshold;
-            });
+            const targets = loadResult.videos.filter(matches);
 
             if (!targets.length) {
-                showToast(strings().noneFound(threshold));
+                showToast(noneFoundMessage);
                 return;
             }
 
@@ -564,8 +614,48 @@
         }
     }
 
+    async function startCleanup(thresholdInput) {
+        if (running) return;
+        const threshold = helpers.clampThreshold(thresholdInput.value, 100);
+        thresholdInput.value = String(threshold);
+        if (!await confirmCleanup(strings().dialogTitle, strings().dialogMessage(threshold))) return;
+        return runCleanup({
+            matches: (video) => {
+                const percentage = watchedPercentage(video);
+                return percentage !== null && percentage >= threshold;
+            },
+            noneFoundMessage: strings().noneFound(threshold)
+        });
+    }
+
+    async function startCleanupByDate(dateInput) {
+        if (running) return;
+        if (!dateInput.value) {
+            showToast(strings().dateRequired, true);
+            return;
+        }
+        const cutoff = new Date(`${dateInput.value}T00:00:00`);
+        if (Number.isNaN(cutoff.getTime())) {
+            showToast(strings().dateRequired, true);
+            return;
+        }
+        const formattedDate = new Intl.DateTimeFormat(
+            (document.documentElement.lang || navigator.language || 'en'),
+            { dateStyle: 'medium' }
+        ).format(cutoff);
+        if (!await confirmCleanup(strings().dateDialogTitle, strings().dateDialogMessage(formattedDate))) return;
+        return runCleanup({
+            matches: (video) => {
+                const date = uploadDate(video);
+                return date !== null && date < cutoff;
+            },
+            noneFoundMessage: strings().noOldVideosFound(formattedDate)
+        });
+    }
+
     function syncWithNavigation() {
         document.getElementById(IDS.action)?.remove();
+        document.getElementById(IDS.dateAction)?.remove();
         if (!isPlaylistPage()) {
             popupObserver?.disconnect();
             hideProgress();

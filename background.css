@@ -54,6 +54,7 @@ tp-yt-iron-dropdown.wvoytr-expanded-dropdown #contentWrapper {
     font-size: 14px;
     min-height: 48px;
     padding: 0 16px;
+    transition: background-color .15s ease;
     white-space: nowrap;
     width: 100%;
 }
@@ -84,18 +85,23 @@ html[dark] .wvoytr-action-menu-item {
 
 .wvoytr-action-menu-item:hover,
 .wvoytr-action-menu-item:focus-visible {
-    background: var(--yt-spec-10-percent-layer);
+    background-color: rgba(0, 0, 0, .08);
     outline: none;
+}
+
+html[dark] .wvoytr-action-menu-item:hover,
+html[dark] .wvoytr-action-menu-item:focus-visible {
+    background-color: rgba(255, 255, 255, .1);
 }
 
 .wvoytr-modern-menu .wvoytr-action-menu-item:hover,
 .wvoytr-modern-menu .wvoytr-action-menu-item:focus-visible {
-    background: rgba(0, 0, 0, .08);
+    background-color: rgba(0, 0, 0, .08);
 }
 
 html[dark] .wvoytr-modern-menu .wvoytr-action-menu-item:hover,
 html[dark] .wvoytr-modern-menu .wvoytr-action-menu-item:focus-visible {
-    background: rgba(255, 255, 255, .1);
+    background-color: rgba(255, 255, 255, .1);
 }
 
 .wvoytr-action-icon {
@@ -124,6 +130,23 @@ html[dark] .wvoytr-modern-menu .wvoytr-action-menu-item:focus-visible {
     font: inherit;
     padding: 4px;
     width: 52px;
+}
+
+.wvoytr-date-input {
+    background: rgba(127, 127, 127, .16);
+    border: 1px solid var(--yt-spec-10-percent-layer);
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: inherit;
+    color-scheme: light dark;
+    font: inherit;
+    margin-left: 12px;
+    padding: 4px 6px;
+    width: 132px;
+}
+
+.wvoytr-modern-menu .wvoytr-date-input {
+    margin-left: 10px;
 }
 
 #wvoytr-progress {

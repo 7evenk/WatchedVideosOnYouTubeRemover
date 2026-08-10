@@ -2,7 +2,26 @@
 
 All notable changes to Watched Videos On YouTube Remover are documented here.
 
-## [1.1.0] - Unreleased
+## [1.2.0] - Unreleased
+
+### Added
+
+- A separate action to remove videos uploaded before a selected date.
+- A date picker that defaults to one year ago and remains editable before cleanup.
+- English and German confirmation copy explaining that date-based cleanup ignores watch progress.
+- Safe handling for playlist entries whose upload date cannot be recognized.
+
+### Changed
+
+- Generalized removal progress and completion messages for watched and date-based cleanup.
+- Added consistent animated hover and keyboard-focus feedback to both extension menu actions.
+
+### Privacy
+
+- Date-based cleanup reads only upload-date text already displayed in the open YouTube playlist.
+- No analytics, tracking, account, or external data transfer was added.
+
+## [1.1.0] - 2026-08-05
 
 ### Added
 

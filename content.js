@@ -20,7 +20,7 @@
         menuList: 'ytd-popup-container tp-yt-iron-dropdown tp-yt-paper-listbox, ytd-popup-container tp-yt-iron-dropdown yt-list-view-model',
         videos: 'ytd-playlist-video-renderer',
         videoMenuButton: '#menu #interaction, #menu button, ytd-menu-renderer button',
-        progress: '#progress'
+        progress: '.ytwThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress, #progress'
     };
     const MENU_WAIT_TIMEOUT = 5000;
     const DELETE_WAIT_TIMEOUT = 5000;

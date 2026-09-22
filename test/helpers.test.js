@@ -2,12 +2,20 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { clampThreshold, isPlaylistActionMenuText, isRemoveMenuText, parsePercentage, parseUploadDate } = require('../helpers');
 
 test('parsePercentage reads YouTube progress widths', () => {
     assert.equal(parsePercentage('95%'), 95);
     assert.equal(parsePercentage('width: 99.5%;'), 99.5);
     assert.equal(parsePercentage(''), null);
+});
+
+test('content script supports the current and legacy YouTube progress bars', () => {
+    const content = fs.readFileSync(path.join(__dirname, '..', 'content.js'), 'utf8');
+    assert.match(content, /ytwThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress/);
+    assert.match(content, /#progress/);
 });
 
 test('clampThreshold accepts zero and clamps invalid ranges', () => {

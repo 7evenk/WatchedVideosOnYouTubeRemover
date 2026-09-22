@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Watched Videos On YouTube Remover",
     "description": "Clean up YouTube playlists by watch progress or upload date, with confirmation and visible progress.",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "icons": {
         "16": "/images/icon16.png",
         "48": "/images/icon48.png",

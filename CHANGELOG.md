@@ -2,7 +2,14 @@
 
 All notable changes to Watched Videos On YouTube Remover are documented here.
 
-## [1.2.0] - Unreleased
+## [1.2.1] - 2026-09-22
+
+### Fixed
+
+- Restored watched-progress detection after YouTube replaced its playlist thumbnail progress element.
+- Retained compatibility with YouTube's previous progress-bar markup.
+
+## [1.2.0] - 2026-08-10
 
 ### Added
 

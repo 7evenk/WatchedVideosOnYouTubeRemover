@@ -252,7 +252,16 @@
         threshold.addEventListener('click', (event) => event.stopPropagation());
         threshold.addEventListener('keydown', (event) => event.stopPropagation());
         dateInput.addEventListener('click', (event) => event.stopPropagation());
-        dateInput.addEventListener('keydown', (event) => event.stopPropagation());
+        dateInput.addEventListener('keydown', (event) => {
+            event.stopPropagation();
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (dateInput.value && dateInput.reportValidity()) {
+                    dateInput.blur();
+                    dateItem.focus();
+                }
+            }
+        });
         item.addEventListener('click', () => {
             closeVisibleMenus();
             startCleanup(threshold);
@@ -497,12 +506,16 @@
     }
 
     function uploadDate(video) {
-        const metadata = Array.from(video.querySelectorAll('#metadata-line span, .inline-metadata-item'));
+        // Playlist variants render age either as separate spans or in #video-info.
+        // Never search titles or the entire renderer for a destructive date match.
+        const metadata = Array.from(video.querySelectorAll(
+            '#video-info, #metadata-line, .inline-metadata-item'
+        ));
         for (const element of metadata) {
             const parsed = helpers.parseUploadDate(element.textContent);
             if (parsed) return parsed;
         }
-        return helpers.parseUploadDate(video.textContent);
+        return null;
     }
 
     function findRemoveCommand(menuList) {

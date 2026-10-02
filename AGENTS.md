@@ -22,3 +22,15 @@
 ## External changes
 
 - Do not commit, push, close issues, publish releases, upload Web Store packages, or respond to reviews without explicit user approval.
+
+## Release checklist
+
+- Before preparing a release, review the related issue and the user's manual Chrome verification.
+- Keep the version in `manifest.json` and `package.json` aligned and update `CHANGELOG.md`.
+- Create a versioned, copy-ready description in `docs/chrome-web-store-descriptions/<version>.md`. It must contain only the text intended for the Web Store description field, not screenshot instructions or internal checklists.
+- Update `docs/chrome-web-store-listing.md` to reference that description and the current release notes.
+- Review the English and German extension pages in the sibling `7evenk.github.io` repository (`watched-videos.html` and `de/watched-videos.html`). Update feature explanations and release information as needed; follow that repository's instructions and preserve unrelated edits.
+- Distinguish prepared, submitted, and published Web Store updates on the website. Do not claim a version is published until publication is confirmed.
+- Review whether existing screenshots still describe the UI accurately; reuse them when appropriate.
+- Build and inspect the ZIP against the runtime allowlist, run the required checks, and deliver links to both the ZIP and the copy-ready description.
+- When authorized, commit and push the extension and website changes, verify both remote branches, and close manually verified issues. Web Store upload and publication require their own user authorization.

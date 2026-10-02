@@ -2,6 +2,19 @@
 
 All notable changes to Watched Videos On YouTube Remover are documented here.
 
+## [1.2.2] - 2026-10-02
+
+### Fixed
+
+- Fixed date-based cleanup missing older videos in German playlist metadata, verified in Chrome on macOS.
+- Recognize upload ages inside combined metadata and additional playlist metadata containers.
+- Keep titles and unrelated video text out of upload-date matching.
+
+### Changed
+
+- Enter confirms a valid date and moves focus from the date input to the menu action without starting cleanup.
+- Incomplete or invalid dates retain input focus for correction.
+
 ## [1.2.1] - 2026-09-22
 
 ### Fixed

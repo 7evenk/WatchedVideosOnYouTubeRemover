@@ -39,6 +39,27 @@ test('parseUploadDate reads exact localized dates', () => {
     assert.equal(parseUploadDate('2023-08-03').getFullYear(), 2023);
 });
 
+test('German ages are recognized inside combined playlist metadata', () => {
+    const now = new Date(2026, 9, 2, 12);
+    const cutoff = new Date(2026, 7, 1);
+    assert.equal(parseUploadDate('12.345 Aufrufe • vor 5 Monaten', now).getMonth(), 4);
+    assert.ok(parseUploadDate('12.345 Aufrufe • vor 5 Monaten', now) < cutoff);
+    assert.ok(parseUploadDate('12.345 Aufrufe • vor 2 Monaten', now) > cutoff);
+    assert.equal(parseUploadDate('vor\u00a0fünf\u00a0Monaten', now).getMonth(), 4);
+    assert.equal(parseUploadDate('Gestreamt vor 2 Jahren', now).getFullYear(), 2024);
+    assert.equal(parseUploadDate('vor einem Jahr', now).getFullYear(), 2025);
+});
+
+test('relative age stays associated with its number, never a view count', () => {
+    const now = new Date(2026, 9, 2, 12);
+    assert.equal(parseUploadDate('1M views • 5 months ago', now).getMonth(), 4);
+    assert.equal(parseUploadDate('2y', now).getFullYear(), 2024);
+    assert.equal(parseUploadDate('2mo', now).getMonth(), 7);
+    assert.equal(parseUploadDate('1M views', now), null);
+    assert.equal(parseUploadDate('5 months ago'.replace('ago', '')), null);
+    assert.equal(parseUploadDate('Keine Aufrufe', now), null);
+});
+
 test('remove menu labels are recognized without relying on menu positions', () => {
     assert.equal(isRemoveMenuText('Remove from Watch later'), true);
     assert.equal(isRemoveMenuText('Aus „Später ansehen“ entfernen'), true);

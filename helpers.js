@@ -28,24 +28,31 @@
     }
 
     function parseUploadDate(value, now = new Date()) {
-        const normalized = String(value || '').trim().toLocaleLowerCase();
+        const normalized = String(value || '').replace(/[\u200b-\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
         if (!normalized) return null;
 
         const relativePatterns = [
-            { pattern: /(\d+)\s*(?:seconds?|sekunden?|s\b)/, unit: 'seconds' },
-            { pattern: /(\d+)\s*(?:minutes?|minuten?|m\b)/, unit: 'minutes' },
-            { pattern: /(\d+)\s*(?:hours?|stunden?|h\b)/, unit: 'hours' },
-            { pattern: /(\d+)\s*(?:days?|tagen?|d\b)/, unit: 'days' },
-            { pattern: /(\d+)\s*(?:weeks?|wochen?|w\b)/, unit: 'weeks' },
-            { pattern: /(\d+)\s*(?:months?|monaten?|mo\b)/, unit: 'months' },
-            { pattern: /(\d+)\s*(?:years?|jahren?|y\b)/, unit: 'years' }
+            { names: 'seconds?|sekunden?|s', unit: 'seconds' },
+            { names: 'minutes?|minuten?|m', unit: 'minutes' },
+            { names: 'hours?|stunden?|h', unit: 'hours' },
+            { names: 'days?|tag(?:e|en)?|d', unit: 'days' },
+            { names: 'weeks?|wochen?|w', unit: 'weeks' },
+            { names: 'months?|monat(?:e|en)?|mo', unit: 'months' },
+            { names: 'years?|jahr(?:e|en)?|y', unit: 'years' }
         ];
-        if (normalized.includes('ago') || normalized.startsWith('vor ')) {
-            for (const { pattern, unit } of relativePatterns) {
-                const match = normalized.match(pattern);
+        const germanNumbers = { einem: 1, einer: 1, zwei: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10, elf: 11, zwölf: 12 };
+        const abbreviations = { seconds: 's', minutes: 'm', hours: 'h', days: 'd', weeks: 'w', months: 'mo', years: 'y' };
+        {
+            // Match the age and its amount together: view counts must not become ages.
+            const amountPattern = `(?:\\d+|${Object.keys(germanNumbers).join('|')})`;
+            for (const { names, unit } of relativePatterns) {
+                const german = normalized.match(new RegExp(`\\bvor (${amountPattern})\\s*(?:${names})\\b`));
+                const english = normalized.match(new RegExp(`\\b(\\d+)\\s*(?:${names})\\s+ago\\b`));
+                const compact = normalized.match(new RegExp(`^(\\d+)\\s*${abbreviations[unit]}$`));
+                const match = german || english || compact;
                 if (!match) continue;
                 const result = new Date(now);
-                const amount = Number(match[1]);
+                const amount = germanNumbers[match[1]] ?? Number(match[1]);
                 if (unit === 'seconds') result.setSeconds(result.getSeconds() - amount);
                 if (unit === 'minutes') result.setMinutes(result.getMinutes() - amount);
                 if (unit === 'hours') result.setHours(result.getHours() - amount);

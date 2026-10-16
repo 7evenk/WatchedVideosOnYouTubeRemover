@@ -2,6 +2,18 @@
 
 All notable changes to Watched Videos On YouTube Remover are documented here.
 
+## [1.2.3] - 2026-10-15
+
+### Added
+
+- Optional “Support this tool” link below the playlist cleanup actions, localized in English and German (#22).
+- Opens the matching public product page with PayPal and Buy Me a Coffee in a new tab only after a click.
+
+### Privacy
+
+- The fixed support URL contains no playlist information or viewing data, and the link sends no referrer.
+- All features remain free; no payment integration, tracking, or additional permissions were added.
+
 ## [1.2.2] - 2026-10-02
 
 ### Fixed

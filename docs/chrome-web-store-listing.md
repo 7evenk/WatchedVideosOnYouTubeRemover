@@ -1,8 +1,8 @@
-# Chrome Web Store listing — version 1.2.2
+# Chrome Web Store listing — version 1.2.3
 
-Tracking issues: #17, #21, #27, #28
+Tracking issue: #22
 
-Copy-ready description: `docs/chrome-web-store-descriptions/1.2.2.md`
+Copy-ready description: `docs/chrome-web-store-descriptions/1.2.3.md`
 
 ## Name
 
@@ -59,11 +59,15 @@ HOW TO USE
 
 The extension only removes videos from the selected playlist. It does not delete videos from YouTube.
 
-WHAT’S NEW IN VERSION 1.2.2
+FREE WITH OPTIONAL SUPPORT
 
-• Fixed date-based cleanup missing older videos in German playlist metadata, verified on macOS
-• Improved upload-date recognition across YouTube playlist layouts
-• Press Enter to finish editing a valid date without starting cleanup
+All features are free. The “Support this tool” link in the playlist menu opens the matching English or German product page in a new tab. You can optionally support maintenance through PayPal or Buy Me a Coffee there. Contributions are never required and do not unlock features. The link opens only after a click, sends no referrer, and contains no playlist or viewing data.
+
+WHAT’S NEW IN VERSION 1.2.3
+
+• Added an optional “Support this tool” link below the playlist cleanup actions
+• English and German link text and product pages
+• All cleanup features remain free, with no additional permissions
 
 Source code and issue tracker:
 https://github.com/7evenk/WatchedVideosOnYouTubeRemover
@@ -90,16 +94,25 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 5. **Stay in control while videos are removed**
    Show determinate removal progress and the Cancel button.
 
-## What's new in 1.2.2
+## What's new in 1.2.3
 
-• Fixed date-based cleanup missing older videos in German playlist metadata, verified on macOS
-• Improved upload-date recognition across YouTube playlist layouts
-• Press Enter to finish editing a valid date without starting cleanup
+• Added an optional “Support this tool” link below the playlist cleanup actions
+• English and German link text and product pages
+• All cleanup features remain free, with no additional permissions
+
+Release notes: `CHANGELOG.md`, version 1.2.3.
+
+## Preparation and verification status
+
+- Package prepared locally on October 15, 2026; not uploaded, submitted, or confirmed published.
+- Issue #22 remains open. Posting the implementation note requires GitHub authentication.
+- Manual Chrome verification of the support link is pending: reload the unpacked extension on chrome://extensions, reload YouTube, open the playlist menu, and verify that the localized link opens the product page in a new tab without starting cleanup. Check keyboard access and light/dark appearance.
+- Existing screenshots reviewed: reuse the confirmation and progress screenshots in `screenshots/store-1.2.0/en/`. The menu screenshot still explains cleanup but predates the support link; capture an updated menu screenshot after Chrome verification if the listing should show the link.
 
 ## Store metadata links
 
 - Homepage: `https://7evenk.github.io/watched-videos.html`
-- Support URL: `https://github.com/7evenk/WatchedVideosOnYouTubeRemover/issues`
+- Support URL: `https://chromewebstore.google.com/detail/kfpijemcjneklkhbdhidjfdddkommecm/support`
 - Source code: `https://github.com/7evenk/WatchedVideosOnYouTubeRemover`
 
 ## Accuracy checklist before publishing
@@ -110,4 +123,4 @@ Watched Videos On YouTube Remover is an independent project and is not affiliate
 - Confirm the privacy disclosure still matches the packaged code.
 - Verify date-based cleanup around the selected cutoff date.
 - Confirm entries without a recognizable upload date are kept.
-- Upload the five English screenshots from `screenshots/store-1.2.0/en/`.
+- Reuse the four confirmation/progress screenshots; review or replace the playlist-menu screenshot after Chrome verification.

@@ -5,6 +5,7 @@
     const IDS = {
         action: 'wvoytr-remove-watched',
         dateAction: 'wvoytr-remove-by-date',
+        support: 'wvoytr-support',
         dialog: 'wvoytr-dialog',
         dialogBackdrop: 'wvoytr-dialog-backdrop',
         progress: 'wvoytr-progress',
@@ -36,6 +37,8 @@
             dateAction: 'Remove videos before date',
             dateAria: 'Remove videos uploaded before this date',
             dateRequired: 'Choose a date first.',
+            support: 'Support this tool ↗',
+            supportUrl: 'https://7evenk.github.io/watched-videos.html',
             dialogTitle: 'Remove watched videos?',
             dialogMessage: (threshold) => `The complete playlist will be loaded. All videos watched at least ${threshold}% will then be removed.`,
             dateDialogTitle: 'Remove old videos?',
@@ -62,6 +65,8 @@
             dateAction: 'Videos vor Datum entfernen',
             dateAria: 'Videos entfernen, die vor diesem Datum hochgeladen wurden',
             dateRequired: 'Wähle zuerst ein Datum aus.',
+            support: 'Tool unterstützen ↗',
+            supportUrl: 'https://7evenk.github.io/de/watched-videos.html',
             dateDialogTitle: 'Alte Videos entfernen?',
             dateDialogMessage: (date) => `Die vollständige Playlist wird geladen. Anschließend werden Videos entfernt, die vor dem ${date} hochgeladen wurden – unabhängig vom Wiedergabefortschritt.`,
             thresholdAria: 'Schwellenwert für den angesehenen Prozentsatz',
@@ -184,6 +189,7 @@
     function createActionItem(menuList) {
         if (menuList.querySelector(`#${IDS.action}`)) return;
         document.getElementById(IDS.action)?.remove();
+        document.getElementById(IDS.support)?.remove();
         menuList.classList.toggle('wvoytr-modern-menu', menuList.matches('yt-list-view-model'));
 
         const popupRenderer = menuList.closest('ytd-menu-popup-renderer');
@@ -248,6 +254,15 @@
         ].join('-');
         dateItem.append(dateIcon, dateLabel, dateInput);
         menuList.appendChild(dateItem);
+
+        const support = document.createElement('a');
+        support.id = IDS.support;
+        support.className = 'wvoytr-support-link';
+        support.textContent = strings().support;
+        support.href = strings().supportUrl;
+        support.target = '_blank';
+        support.rel = 'noopener noreferrer';
+        menuList.appendChild(support);
 
         threshold.addEventListener('click', (event) => event.stopPropagation());
         threshold.addEventListener('keydown', (event) => event.stopPropagation());
@@ -669,6 +684,7 @@
     function syncWithNavigation() {
         document.getElementById(IDS.action)?.remove();
         document.getElementById(IDS.dateAction)?.remove();
+        document.getElementById(IDS.support)?.remove();
         if (!isPlaylistPage()) {
             popupObserver?.disconnect();
             hideProgress();

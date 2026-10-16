@@ -1,2 +1,7 @@
 .tools/
 dist/
+
+# Build output and local verification
+node_modules/
+dist/
+.local/

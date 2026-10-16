@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { clampThreshold, isPlaylistActionMenuText, isRemoveMenuText, parsePercentage, parseUploadDate } = require('../helpers');
+const { clampThreshold, isPlaylistActionMenuText, isRemoveMenuText, parsePercentage, parseUploadDate } = require('../extension/helpers');
 
 test('parsePercentage reads YouTube progress widths', () => {
     assert.equal(parsePercentage('95%'), 95);
@@ -13,7 +13,7 @@ test('parsePercentage reads YouTube progress widths', () => {
 });
 
 test('content script supports the current and legacy YouTube progress bars', () => {
-    const content = fs.readFileSync(path.join(__dirname, '..', 'content.js'), 'utf8');
+    const content = fs.readFileSync(path.join(__dirname, '..', 'extension', 'content.js'), 'utf8');
     assert.match(content, /ytwThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress/);
     assert.match(content, /#progress/);
 });

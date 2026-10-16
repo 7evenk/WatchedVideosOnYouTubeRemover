@@ -5,12 +5,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const helpers = require('../helpers');
+const helpers = require('../extension/helpers');
 
 // Exercise the actual content-script functions without initializing observers
 // or executing destructive cleanup. The test hook exists only in this VM copy.
 function loadContent(document) {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'content.js'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '..', 'extension', 'content.js'), 'utf8');
     const context = {
         document,
         WVOYTRHelpers: helpers,

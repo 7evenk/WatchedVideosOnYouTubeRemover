@@ -1,0 +1,13 @@
+{
+  "slug": "watched-videos-on-youtube-remover",
+  "files": [
+    "manifest.json",
+    "content.js",
+    "helpers.js",
+    "background.css",
+    "LICENSE",
+    "images/icon16.png",
+    "images/icon48.png",
+    "images/icon128.png"
+  ]
+}

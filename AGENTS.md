@@ -34,3 +34,8 @@
 - Review whether existing screenshots still describe the UI accurately; reuse them when appropriate.
 - Build and inspect the ZIP against the runtime allowlist, run the required checks, and deliver links to both the ZIP and the copy-ready description.
 - When authorized, commit and push the extension and website changes, verify both remote branches, and close manually verified issues. Web Store upload and publication require their own user authorization.
+
+## Unified extension layout
+- Load extension/ in Chrome. Runtime paths in earlier packaging rules are relative to extension/.
+- Use tools/package.ps1 or npm run build; ZIP artifacts belong in dist/ and contain only tools/package.config.json runtime allowlist.
+- Keep manifest/package versions aligned. Run npm test and npm run check. See docs/extension-layout.md for migration tracking.

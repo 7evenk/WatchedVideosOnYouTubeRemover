@@ -2,6 +2,11 @@
 
 All notable changes to Watched Videos On YouTube Remover are documented here.
 
+## [Unreleased]
+
+### Development
+- Standardize extension/ loading, tools/, test/ and dist/ packaging; no runtime or permission change. https://github.com/7evenk/WatchedVideosOnYouTubeRemover/issues/29
+
 ## [1.2.3] - 2026-10-15
 
 ### Added
